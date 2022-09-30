@@ -1,12 +1,12 @@
 package messages
 
 import (
-	mockmessages "gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/mocks/messages"
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/vars"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"testing"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	mockmessages "gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/mocks/messages"
 )
 
 func Test_OnStartCommand_ShouldAnswerWithIntroMessage(t *testing.T) {
@@ -14,12 +14,12 @@ func Test_OnStartCommand_ShouldAnswerWithIntroMessage(t *testing.T) {
 	sender := mockmessages.NewMockMessageSender(ctrl)
 	model := New(sender, nil)
 
-	sender.EXPECT().SendMessage("hello", int64(123))
+	sender.EXPECT().SendMessage("hello\n"+infoText, int64(123))
 
 	_, err := model.IncomingMessage(Message{
 		Text:   "/start",
 		UserID: 123,
-	}, vars.ExpectedCommand)
+	}, userstates.ExpectedCommand)
 
 	assert.NoError(t, err)
 }
@@ -29,18 +29,12 @@ func Test_OnInfoCommand_ShouldAnswerWithInfoMessage(t *testing.T) {
 	sender := mockmessages.NewMockMessageSender(ctrl)
 	model := New(sender, nil)
 
-	text := `/info - текущая справка
-/newexpense - добавление новой траты
-/lastweek - траты за последнюю неделю
-/lastmonth - траты за последний месяц
-/lastyear - траты за последний год`
-
-	sender.EXPECT().SendMessage(text, int64(123))
+	sender.EXPECT().SendMessage(infoText, int64(123))
 
 	_, err := model.IncomingMessage(Message{
 		Text:   "/info",
 		UserID: 123,
-	}, vars.ExpectedCommand)
+	}, userstates.ExpectedCommand)
 
 	assert.NoError(t, err)
 }
@@ -55,7 +49,7 @@ func Test_OnUnknownCommand_ShouldAnswerWithHelpMessage(t *testing.T) {
 	_, err := model.IncomingMessage(Message{
 		Text:   "some text",
 		UserID: 123,
-	}, vars.ExpectedCommand)
+	}, userstates.ExpectedCommand)
 
 	assert.NoError(t, err)
 }

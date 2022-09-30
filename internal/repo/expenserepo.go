@@ -1,8 +1,9 @@
-package interfaces
+package repo
 
 import (
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
 	"time"
+
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
 )
 
 type ExpensesRepo interface {

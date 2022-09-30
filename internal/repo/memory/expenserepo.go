@@ -1,8 +1,9 @@
 package memory
 
 import (
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
 	"time"
+
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
 )
 
 type ExpensesUserCatPayment struct {
@@ -16,7 +17,7 @@ type ExpenseRepo struct {
 	e map[int64]ExpensesUserCat
 }
 
-func New() *ExpenseRepo {
+func NewExpenseRepo() *ExpenseRepo {
 	return &ExpenseRepo{
 		e: make(map[int64]ExpensesUserCat),
 	}
@@ -25,7 +26,7 @@ func New() *ExpenseRepo {
 func (r *ExpenseRepo) Add(e *expenses.Expense) error {
 	_, ok := r.e[e.UserID]
 	if !ok {
-		r.e[e.UserID] = make(map[string][]ExpensesUserCatPayment)
+		r.e[e.UserID] = make(ExpensesUserCat)
 	}
 	payments := r.e[e.UserID][e.Category]
 	payments = append(payments, ExpensesUserCatPayment{

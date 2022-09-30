@@ -2,29 +2,30 @@ package reports
 
 import (
 	"fmt"
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/interfaces"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
+	"strings"
 	"time"
 )
 
 type ReportManager struct {
-	er interfaces.ExpensesRepo
+	er repo.ExpensesRepo
 }
 
-func New(er interfaces.ExpensesRepo) *ReportManager {
+func New(er repo.ExpensesRepo) *ReportManager {
 	return &ReportManager{
 		er: er,
 	}
 }
 
 func (rm *ReportManager) makeTextReport(expData map[string]int) string {
-	var result string
+	var sb strings.Builder
 	for cat, amount := range expData {
-		result += fmt.Sprintf("%s : %d\n", cat, amount)
+		sb.WriteString(fmt.Sprintf("Категория: %s, Трата: %d₽\n", cat, amount))
 	}
-	if result == "" {
-		result = "Нет информации о расходах в данных период времени"
+	if len(expData) == 0 {
+		sb.WriteString("Нет информации о расходах в данных период времени")
 	}
-	return result
+	return sb.String()
 }
 
 func (rm *ReportManager) LastWeek(UserID int64) (result string) {
