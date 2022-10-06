@@ -1,16 +1,24 @@
 package config
 
 import (
-	"os"
-
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
+	"os"
 )
 
 const configFile = "data/config.yaml"
 
+type CurrencyInfo struct {
+	Name    string `yaml:"name"`
+	Display string `yaml:"display"`
+}
+
 type Config struct {
-	Token string `yaml:"token"`
+	Token                    string         `yaml:"token"`
+	CurrencyURL              string         `yaml:"currency_url"`
+	CurrencyMain             string         `yaml:"currency_main"`
+	CurrencyRateLoadInterval int            `yaml:"currency_rate_load_interval"`
+	Currencies               []CurrencyInfo `yaml:"currencies"`
 }
 
 type Service struct {
@@ -35,4 +43,8 @@ func New() (*Service, error) {
 
 func (s *Service) Token() string {
 	return s.config.Token
+}
+
+func (s *Service) GetConfig() Config {
+	return s.config
 }
