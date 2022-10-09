@@ -1,9 +1,11 @@
 package config
 
 import (
+	"os"
+	"time"
+
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
-	"os"
 )
 
 const configFile = "data/config.yaml"
@@ -15,7 +17,9 @@ type CurrencyInfo struct {
 
 type Config struct {
 	Token                    string         `yaml:"token"`
-	CurrencyURL              string         `yaml:"currency_url"`
+	CurrencyURLCurrent       string         `yaml:"currency_url_current"`
+	CurrencyURLPast          string         `yaml:"currency_url_past"`
+	CurrencyRateEarliestDate time.Time      `yaml:"currency_rate_earliest_date"`
 	CurrencyMain             string         `yaml:"currency_main"`
 	CurrencyRateLoadInterval int            `yaml:"currency_rate_load_interval"`
 	Currencies               []CurrencyInfo `yaml:"currencies"`

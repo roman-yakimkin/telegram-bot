@@ -7,7 +7,7 @@ type CategoryProcessor struct {
 	userState     *userstates.UserState
 }
 
-func NewCategoryProcessor() *CategoryProcessor {
+func NewCategoryProcessor() UserStateProcessor {
 	return &CategoryProcessor{
 		processStatus: userstates.ExpectedCategory,
 	}

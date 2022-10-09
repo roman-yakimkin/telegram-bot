@@ -7,28 +7,28 @@ import (
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 )
 
-type CurrencyProcessor struct {
+type currencyProcessor struct {
 	processStatus int
 	userState     *userstates.UserState
 	currRepo      repo.CurrencyRepo
 }
 
-func NewCurrencyProcessor(currRepo repo.CurrencyRepo) *CurrencyProcessor {
-	return &CurrencyProcessor{
+func NewCurrencyProcessor(currRepo repo.CurrencyRepo) UserStateProcessor {
+	return &currencyProcessor{
 		processStatus: userstates.ExpectedCurrency,
 		currRepo:      currRepo,
 	}
 }
 
-func (p *CurrencyProcessor) SetUserState(userState *userstates.UserState) {
+func (p *currencyProcessor) SetUserState(userState *userstates.UserState) {
 	p.userState = userState
 }
 
-func (p *CurrencyProcessor) GetProcessStatus() int {
+func (p *currencyProcessor) GetProcessStatus() int {
 	return p.processStatus
 }
 
-func (p *CurrencyProcessor) DoProcess(msgText string) {
+func (p *currencyProcessor) DoProcess(msgText string) {
 	if msgText == "*" {
 		p.userState.SetStatus(userstates.ExpectedCommand)
 		return

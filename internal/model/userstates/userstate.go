@@ -18,6 +18,12 @@ const (
 	IncorrectDate
 )
 
+const (
+	AmountNotAdded = iota
+	AmountAddedUnconverted
+	AmountAddedConverted
+)
+
 type UserState struct {
 	UserID        int64
 	Currency      string
@@ -26,7 +32,7 @@ type UserState struct {
 	amount        int
 	date          time.Time
 	addedCategory bool
-	addedAmount   bool
+	addedAmount   int
 	addedDate     bool
 }
 
@@ -53,7 +59,7 @@ func (s *UserState) cleanInputtedExpense() {
 	s.amount = 0
 	s.date = time.Time{}
 	s.addedCategory = false
-	s.addedAmount = false
+	s.addedAmount = AmountNotAdded
 	s.addedDate = false
 }
 
@@ -70,9 +76,18 @@ func (s *UserState) SetCategory(category string) {
 	s.addedCategory = true
 }
 
-func (s *UserState) SetAmount(amount int) {
+func (s *UserState) GetAmount() int {
+	return s.amount
+}
+
+func (s *UserState) SetUnconvertedAmount(amount int) {
 	s.amount = amount
-	s.addedAmount = true
+	s.addedAmount = AmountAddedUnconverted
+}
+
+func (s *UserState) SetConvertedAmount(amount int) {
+	s.amount = amount
+	s.addedAmount = AmountAddedConverted
 }
 
 func (s *UserState) SetDate(date time.Time) {
@@ -81,7 +96,7 @@ func (s *UserState) SetDate(date time.Time) {
 }
 
 func (s *UserState) Added() bool {
-	return s.addedCategory && s.addedAmount && s.addedDate
+	return s.addedCategory && s.addedAmount == AmountAddedConverted && s.addedDate
 }
 
 func (s *UserState) ToExpense() *expenses.Expense {

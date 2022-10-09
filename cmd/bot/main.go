@@ -24,21 +24,21 @@ func main() {
 
 	expRepo := memrepo.NewExpenseRepo()
 	userStateRepo := memrepo.NewUserStateRepo()
-	currencyRepo := memrepo.NewCurrencyRepo(cfg)
+	currencyRepo, err := memrepo.NewCurrencyRepo(cfg)
+	if err != nil {
+		log.Fatal("currency init failed:", err)
+	}
+	currencyRateRepo := memrepo.NewCurrencyRateRepo(cfg)
 
 	tickerInterval := time.Second * time.Duration(cfg.GetConfig().CurrencyRateLoadInterval)
-	currencyUpdate := tickers.NewCurrencyUpdate(currencyRepo, tickerInterval)
+	earlyDate := cfg.GetConfig().CurrencyRateEarliestDate
+	currencyUpdate := tickers.NewCurrencyUpdate(currencyRateRepo, tickerInterval, earlyDate)
 	currencyUpdate.Run(ctx)
 
-	err = currencyRepo.LoadAll()
-	if err != nil {
-		log.Fatal("cannot load currency rates", err)
-	}
+	store := implstore.NewStore(expRepo, userStateRepo, currencyRepo, currencyRateRepo)
 
-	store := implstore.NewStore(expRepo, userStateRepo, currencyRepo)
-
-	currencyOutput := output.NewCurrencyOutput(currencyRepo)
-	currencyConvertor := convertors.NewCurrency(currencyRepo, cfg)
+	currencyOutput := output.NewCurrencyListOutput(currencyRepo)
+	currencyConvertor := convertors.NewCurrencyConvertor(currencyRateRepo, cfg)
 	currencyAmountOutput := output.NewCurrencyAmount(currencyRepo)
 
 	reportManager := output.NewReportManager(store, currencyConvertor, currencyAmountOutput)
@@ -51,5 +51,7 @@ func main() {
 
 	msgModel := messages.New(tgClient, outputSet)
 
-	tgClient.ListenUpdates(msgModel)
+	if err = tgClient.ListenUpdates(msgModel); err != nil {
+		log.Fatal(err)
+	}
 }

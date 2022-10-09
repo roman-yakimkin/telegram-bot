@@ -5,6 +5,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/msgprocessors"
 	mockmessages "gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/mocks/messages"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 )
@@ -16,9 +17,9 @@ func Test_OnStartCommand_ShouldAnswerWithIntroMessage(t *testing.T) {
 	var uid int64 = 123
 	userState := userstates.NewUserState(uid)
 
-	sender.EXPECT().SendMessage("hello\n"+infoText, uid)
+	sender.EXPECT().SendMessage("hello\n"+msgprocessors.InfoText, uid)
 
-	_, err := model.IncomingMessage(Message{
+	_, err := model.IncomingMessage(msgprocessors.Message{
 		Text:   "/start",
 		UserID: uid,
 	}, userState)
@@ -33,9 +34,9 @@ func Test_OnInfoCommand_ShouldAnswerWithInfoMessage(t *testing.T) {
 	var uid int64 = 123
 	userState := userstates.NewUserState(uid)
 
-	sender.EXPECT().SendMessage(infoText, uid)
+	sender.EXPECT().SendMessage(msgprocessors.InfoText, uid)
 
-	_, err := model.IncomingMessage(Message{
+	_, err := model.IncomingMessage(msgprocessors.Message{
 		Text:   "/info",
 		UserID: uid,
 	}, userState)
@@ -52,7 +53,7 @@ func Test_OnUnknownCommand_ShouldAnswerWithHelpMessage(t *testing.T) {
 	var uid int64 = 123
 	userState := userstates.NewUserState(uid)
 
-	_, err := model.IncomingMessage(Message{
+	_, err := model.IncomingMessage(msgprocessors.Message{
 		Text:   "some text",
 		UserID: uid,
 	}, userState)

@@ -10,30 +10,52 @@ import (
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/store"
 )
 
-type ReportManager struct {
-	store      store.Store
-	conv       convertors.CurrencyConvertorTo
-	currAmount *CurrencyAmount
+type ReportManagerLastWeek interface {
+	LastWeek(UserID int64) (string, error)
 }
 
-func NewReportManager(store store.Store, conv convertors.CurrencyConvertorTo, currAmount *CurrencyAmount) *ReportManager {
-	return &ReportManager{
+type ReportManagerLastMonth interface {
+	LastMonth(UserID int64) (string, error)
+}
+
+type ReportManagerLastYear interface {
+	LastYear(UserID int64) (string, error)
+}
+
+type ReportManager interface {
+	ReportManagerLastWeek
+	ReportManagerLastMonth
+	ReportManagerLastYear
+}
+
+type reportManager struct {
+	store      store.Store
+	conv       convertors.CurrencyConvertorTo
+	currAmount CurrencyAmount
+}
+
+func NewReportManager(store store.Store, conv convertors.CurrencyConvertorTo, currAmount CurrencyAmount) ReportManager {
+	return &reportManager{
 		store:      store,
 		conv:       conv,
 		currAmount: currAmount,
 	}
 }
 
-func (rm *ReportManager) makeTextReport(userID int64, expData repo.ExpData) (string, error) {
+func (rm *reportManager) makeTextReport(userID int64, expData repo.ExpData) (string, error) {
 	var sb strings.Builder
 	for cat, expByCurrency := range expData {
 		amountStrs := make([]string, 0, len(expByCurrency))
-		for currName, amount := range expByCurrency {
-			amountInCurrency, err := rm.conv.To(amount, currName)
-			if err != nil {
-				return "", err
+		for currName, amountMap := range expByCurrency {
+			var amountTotal int
+			for date, amount := range amountMap {
+				amountInCurrency, err := rm.conv.To(amount, currName, date)
+				if err != nil {
+					return "", err
+				}
+				amountTotal += amountInCurrency
 			}
-			amountDisplay, err := rm.currAmount.Output(amountInCurrency, currName)
+			amountDisplay, err := rm.currAmount.Output(amountTotal, currName)
 			if err != nil {
 				return "", err
 			}
@@ -47,7 +69,7 @@ func (rm *ReportManager) makeTextReport(userID int64, expData repo.ExpData) (str
 	return sb.String(), nil
 }
 
-func (rm *ReportManager) LastWeek(UserID int64) (string, error) {
+func (rm *reportManager) LastWeek(UserID int64) (string, error) {
 	timeStart := time.Now().AddDate(0, 0, -7)
 	timeEnd := time.Now()
 	expData := rm.store.Expense().ExpensesByUserAndTimeInterval(UserID, timeStart, timeEnd)
@@ -58,14 +80,14 @@ func (rm *ReportManager) LastWeek(UserID int64) (string, error) {
 	return result, nil
 }
 
-func (rm *ReportManager) LastMonth(UserID int64) (string, error) {
+func (rm *reportManager) LastMonth(UserID int64) (string, error) {
 	timeStart := time.Now().AddDate(0, -1, 0)
 	timeEnd := time.Now()
 	expData := rm.store.Expense().ExpensesByUserAndTimeInterval(UserID, timeStart, timeEnd)
 	return rm.makeTextReport(UserID, expData)
 }
 
-func (rm *ReportManager) LastYear(UserID int64) (string, error) {
+func (rm *reportManager) LastYear(UserID int64) (string, error) {
 	timeStart := time.Now().AddDate(-1, 0, 0)
 	timeEnd := time.Now()
 	expData := rm.store.Expense().ExpensesByUserAndTimeInterval(UserID, timeStart, timeEnd)

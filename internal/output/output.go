@@ -1,21 +1,26 @@
 package output
 
-type Output struct {
-	currency *CurrencyListOutput
-	reports  *ReportManager
+type Output interface {
+	Currency() CurrencyListOutput
+	Reports() ReportManager
 }
 
-func NewOutput(currency *CurrencyListOutput, reports *ReportManager) *Output {
-	return &Output{
+type output struct {
+	currency CurrencyListOutput
+	reports  ReportManager
+}
+
+func NewOutput(currency CurrencyListOutput, reports ReportManager) Output {
+	return &output{
 		currency: currency,
 		reports:  reports,
 	}
 }
 
-func (o *Output) Currency() *CurrencyListOutput {
+func (o *output) Currency() CurrencyListOutput {
 	return o.currency
 }
 
-func (o *Output) Reports() *ReportManager {
+func (o *output) Reports() ReportManager {
 	return o.reports
 }

@@ -1,47 +1,42 @@
 package userstateprocessors
 
 import (
-	"log"
 	"regexp"
 	"strconv"
 
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 )
 
 const AmountRegex = `^(\d*)([\.,](\d{2})?)?$`
 
-type AmountProcessor struct {
+type amountProcessor struct {
 	processStatus int
 	userState     *userstates.UserState
 	amountRegExp  *regexp.Regexp
-	currConv      convertors.CurrencyConvertorFrom
 }
 
-func NewAmountProcessor(currConv convertors.CurrencyConvertorFrom) *AmountProcessor {
-	return &AmountProcessor{
-		processStatus: userstates.ExpectedAmount,
-		currConv:      currConv,
+func NewAmountProcessor() (UserStateProcessor, error) {
+	amountRegExp, err := regexp.Compile(AmountRegex)
+	if err != nil {
+		return nil, err
 	}
+	return &amountProcessor{
+		processStatus: userstates.ExpectedAmount,
+		amountRegExp:  amountRegExp,
+	}, nil
 }
 
-func (p *AmountProcessor) GetProcessStatus() int {
+func (p *amountProcessor) GetProcessStatus() int {
 	return p.processStatus
 }
 
-func (p *AmountProcessor) SetUserState(userState *userstates.UserState) {
+func (p *amountProcessor) SetUserState(userState *userstates.UserState) {
 	p.userState = userState
 }
 
-func (p *AmountProcessor) parseMsgText(msgText string) (int, int, error) {
+func (p *amountProcessor) parseMsgText(msgText string) (int, int, error) {
 	var err error
-	if p.amountRegExp == nil {
-		p.amountRegExp, err = regexp.Compile(AmountRegex)
-		if err != nil {
-			return 0, 0, err
-		}
-	}
 	matches := p.amountRegExp.FindAllStringSubmatch(msgText, -1)
 	if len(matches) != 1 {
 		return 0, 0, localerr.ErrIncorrectAmountValue
@@ -66,17 +61,12 @@ func (p *AmountProcessor) parseMsgText(msgText string) (int, int, error) {
 	return intPart, fracPart, nil
 }
 
-func (p *AmountProcessor) DoProcess(msgText string) {
+func (p *amountProcessor) DoProcess(msgText string) {
 	amountInt, amountFrac, err := p.parseMsgText(msgText)
 	if err != nil {
 		p.userState.SetStatus(userstates.IncorrectAmount)
 		return
 	}
 	amount := amountInt*100 + amountFrac
-	amountInBaseCurrency, err := p.currConv.From(amount, p.userState.Currency)
-	if err != nil {
-		log.Println("error on currency converting:", err)
-		return
-	}
-	p.userState.SetAmount(amountInBaseCurrency)
+	p.userState.SetUnconvertedAmount(amount)
 }

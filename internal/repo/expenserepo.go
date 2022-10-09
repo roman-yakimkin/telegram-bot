@@ -6,7 +6,10 @@ import (
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
 )
 
-type ExpCurrencyData map[string]int
+type ExpCurrencyDayData map[time.Time]int
+
+type ExpCurrencyData map[string]ExpCurrencyDayData
+
 type ExpData map[string]ExpCurrencyData
 
 type ExpensesRepo interface {

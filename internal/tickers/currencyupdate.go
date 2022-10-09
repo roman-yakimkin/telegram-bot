@@ -2,25 +2,30 @@ package tickers
 
 import (
 	"context"
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 	"log"
 	"time"
+
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/utils"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 )
 
 type CurrencyUpdate struct {
-	cr      repo.CurrencyRepo
-	seconds time.Duration
+	cr        repo.CurrencyRateRepo
+	seconds   time.Duration
+	earlyDate time.Time
 }
 
-func NewCurrencyUpdate(cr repo.CurrencyRepo, seconds time.Duration) *CurrencyUpdate {
+func NewCurrencyUpdate(cr repo.CurrencyRateRepo, seconds time.Duration, earlyDate time.Time) *CurrencyUpdate {
 	return &CurrencyUpdate{
-		cr:      cr,
-		seconds: seconds,
+		cr:        cr,
+		seconds:   seconds,
+		earlyDate: earlyDate,
 	}
 }
 
 func (c *CurrencyUpdate) Run(ctx context.Context) {
 	ticker := time.NewTicker(c.seconds)
+	date := utils.TimeTruncate(time.Now())
 	go func(ctx context.Context, t *time.Ticker) {
 		for {
 			select {
@@ -28,11 +33,24 @@ func (c *CurrencyUpdate) Run(ctx context.Context) {
 				t.Stop()
 				return
 			case <-t.C:
-				err := c.cr.LoadAll()
-				if err != nil {
-					log.Println("loading rates error: ", err)
-					t.Stop()
-					return
+				hasData := true
+				for hasData && date.After(c.earlyDate) {
+					curr, err := c.cr.GetAllByDate(date)
+					if err != nil {
+						log.Print("Error upon getting currency rates:", err)
+						time.Sleep(5 * time.Second)
+					}
+					hasData = len(curr) > 0
+					if hasData {
+						date = date.AddDate(0, 0, -1)
+					}
+				}
+				if !date.After(c.earlyDate) {
+					err := c.cr.LoadByDate(date)
+					if err != nil {
+						log.Print("Error upon getting currency rates:", err)
+						time.Sleep(5 * time.Second)
+					}
 				}
 			}
 		}

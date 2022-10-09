@@ -1,40 +1,42 @@
 package convertors
 
 import (
+	"time"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/config"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 )
 
-type Currency struct {
-	cr  repo.CurrencyRepo
-	cfg *config.Service
+type currencyConvertor struct {
+	currencyRepo repo.CurrencyRateRepo
+	cfg          *config.Service
 }
 
-func NewCurrency(cr repo.CurrencyRepo, cfg *config.Service) *Currency {
-	return &Currency{
-		cr:  cr,
-		cfg: cfg,
+func NewCurrencyConvertor(currencyRepo repo.CurrencyRateRepo, cfg *config.Service) CurrencyConvertor {
+	return &currencyConvertor{
+		currencyRepo: currencyRepo,
+		cfg:          cfg,
 	}
 }
 
-func (c *Currency) getRateToMain(currName string) (float64, error) {
-	currency, err := c.cr.GetOne(currName)
+func (c *currencyConvertor) getRateToMain(currName string, date time.Time) (float64, error) {
+	currency, err := c.currencyRepo.GetOneByDate(currName, date)
 	if err != nil {
 		return 0, err
 	}
 	return currency.RateToMain, nil
 }
 
-func (c *Currency) From(amount int, currFrom string) (int, error) {
-	rate, err := c.getRateToMain(currFrom)
+func (c *currencyConvertor) From(amount int, currFrom string, date time.Time) (int, error) {
+	rate, err := c.getRateToMain(currFrom, date)
 	if err != nil {
 		return 0, err
 	}
 	return int(float64(amount) * rate), nil
 }
 
-func (c *Currency) To(amount int, currFrom string) (int, error) {
-	rate, err := c.getRateToMain(currFrom)
+func (c *currencyConvertor) To(amount int, currFrom string, date time.Time) (int, error) {
+	rate, err := c.getRateToMain(currFrom, date)
 	if err != nil {
 		return 0, err
 	}

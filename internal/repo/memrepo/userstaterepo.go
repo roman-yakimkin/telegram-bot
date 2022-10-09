@@ -5,20 +5,21 @@ import (
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 )
 
-type UserStateRepo struct {
+type userStateRepo struct {
 	mx     sync.Mutex
 	states map[int64]userstates.UserState
 }
 
-func NewUserStateRepo() *UserStateRepo {
-	return &UserStateRepo{
+func NewUserStateRepo() repo.UserStateRepo {
+	return &userStateRepo{
 		states: make(map[int64]userstates.UserState),
 	}
 }
 
-func (r *UserStateRepo) GetOne(UserId int64) (*userstates.UserState, error) {
+func (r *userStateRepo) GetOne(UserId int64) (*userstates.UserState, error) {
 	r.mx.Lock()
 	userState, ok := r.states[UserId]
 	r.mx.Unlock()
@@ -28,7 +29,7 @@ func (r *UserStateRepo) GetOne(UserId int64) (*userstates.UserState, error) {
 	return &userState, nil
 }
 
-func (r *UserStateRepo) Save(state *userstates.UserState) error {
+func (r *userStateRepo) Save(state *userstates.UserState) error {
 	state.BeforeSave()
 	r.mx.Lock()
 	r.states[state.UserID] = *state
@@ -36,7 +37,7 @@ func (r *UserStateRepo) Save(state *userstates.UserState) error {
 	return nil
 }
 
-func (r *UserStateRepo) Delete(UserID int64) error {
+func (r *userStateRepo) Delete(UserID int64) error {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 	_, ok := r.states[UserID]

@@ -1,13 +1,17 @@
 package implstore
 
-import "gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/currencies"
+import (
+	"time"
 
-func (s *Store) UserCurrency(UserID int64) (*currencies.Currency, error) {
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/currencies"
+)
+
+func (s *store) UserCurrencyRate(UserID int64, date time.Time) (*currencies.CurrencyRate, error) {
 	userInfo, err := s.UserState().GetOne(UserID)
 	if err != nil {
 		return nil, err
 	}
-	currency, err := s.Currency().GetOne(userInfo.Currency)
+	currency, err := s.CurrencyRate().GetOneByDate(userInfo.Currency, date)
 	if err != nil {
 		return nil, err
 	}

@@ -7,17 +7,21 @@ import (
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 )
 
-type CurrencyListOutput struct {
+type CurrencyListOutput interface {
+	Output() (string, error)
+}
+
+type currencyListOutput struct {
 	currRepo repo.CurrencyRepo
 }
 
-func NewCurrencyOutput(currRepo repo.CurrencyRepo) *CurrencyListOutput {
-	return &CurrencyListOutput{
+func NewCurrencyListOutput(currRepo repo.CurrencyRepo) CurrencyListOutput {
+	return &currencyListOutput{
 		currRepo: currRepo,
 	}
 }
 
-func (o *CurrencyListOutput) Output() (string, error) {
+func (o *currencyListOutput) Output() (string, error) {
 	var sb strings.Builder
 	currencies, err := o.currRepo.GetAll()
 	if err != nil {

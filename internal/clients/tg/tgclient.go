@@ -1,12 +1,14 @@
 package tg
 
 import (
-	"github.com/pkg/errors"
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/pkg/errors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/msgprocessors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/userstateprocessors"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/messages"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/store"
@@ -49,13 +51,17 @@ func (c *Client) setProcUserState(procs []userstateprocessors.UserStateProcessor
 	}
 }
 
-func (c *Client) ListenUpdates(msgModel *messages.Model) {
+func (c *Client) ListenUpdates(msgModel *messages.Model) error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
+	amountProcessor, err := userstateprocessors.NewAmountProcessor()
+	if err != nil {
+		return err
+	}
 	userStateProcessors := []userstateprocessors.UserStateProcessor{
 		userstateprocessors.NewCategoryProcessor(),
-		userstateprocessors.NewAmountProcessor(c.currConv),
-		userstateprocessors.NewDateProcessor(),
+		amountProcessor,
+		userstateprocessors.NewDateProcessor(c.currConv),
 		userstateprocessors.NewCurrencyProcessor(c.store.Currency()),
 	}
 
@@ -68,6 +74,9 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) {
 			uid := update.Message.From.ID
 			text := update.Message.Text
 			userState, err := c.store.UserState().GetOne(uid)
+			if err != nil && errors.Is(err, localerr.ErrUserStateNotFound) {
+				log.Println("error getting user state value", err)
+			}
 			if err == nil && userState.GetStatus() != userstates.ExpectedCommand {
 				c.setProcUserState(userStateProcessors, userState)
 				for _, proc := range userStateProcessors {
@@ -86,7 +95,7 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) {
 				userState = userstates.NewUserState(uid)
 			}
 
-			newStatus, err := msgModel.IncomingMessage(messages.Message{
+			newStatus, err := msgModel.IncomingMessage(msgprocessors.Message{
 				Text:   text,
 				UserID: uid,
 			}, userState)
@@ -100,4 +109,5 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) {
 			}
 		}
 	}
+	return nil
 }
