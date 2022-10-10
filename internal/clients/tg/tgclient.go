@@ -75,7 +75,7 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) error {
 			text := update.Message.Text
 			userState, err := c.store.UserState().GetOne(uid)
 			if err != nil && errors.Is(err, localerr.ErrUserStateNotFound) {
-				log.Println("error getting user state value", err)
+				userState = userstates.NewUserState(uid)
 			}
 			if err == nil && userState.GetStatus() != userstates.ExpectedCommand {
 				c.setProcUserState(userStateProcessors, userState)
@@ -90,9 +90,6 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) error {
 						log.Println("error adding expense:", err)
 					}
 				}
-			}
-			if userState == nil {
-				userState = userstates.NewUserState(uid)
 			}
 
 			newStatus, err := msgModel.IncomingMessage(msgprocessors.Message{

@@ -31,8 +31,8 @@ func main() {
 	currencyRateRepo := memrepo.NewCurrencyRateRepo(cfg)
 
 	tickerInterval := time.Second * time.Duration(cfg.GetConfig().CurrencyRateLoadInterval)
-	earlyDate := cfg.GetConfig().CurrencyRateEarliestDate
-	currencyUpdate := tickers.NewCurrencyUpdate(currencyRateRepo, tickerInterval, earlyDate)
+	daysCount := cfg.GetConfig().CurrencyRateGetDaysCount
+	currencyUpdate := tickers.NewCurrencyUpdate(currencyRateRepo, tickerInterval, daysCount)
 	currencyUpdate.Run(ctx)
 
 	store := implstore.NewStore(expRepo, userStateRepo, currencyRepo, currencyRateRepo)

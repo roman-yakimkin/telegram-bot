@@ -44,13 +44,19 @@ func (p *DateProcessor) DoProcess(msgText string) {
 			return
 		}
 	}
-	amount := p.userState.GetAmount()
-	amountInBaseCurrency, err := p.currConv.From(amount, p.userState.Currency, utils.TimeTruncate(date))
-	if err != nil {
+	if err = p.convertAndAddAmount(date); err != nil {
 		log.Println("error on currency converting:", err)
 		return
 	}
-
-	p.userState.SetConvertedAmount(amountInBaseCurrency)
 	p.userState.SetDate(date)
+}
+
+func (p *DateProcessor) convertAndAddAmount(date time.Time) error {
+	amount := p.userState.GetAmount()
+	amountInBaseCurrency, err := p.currConv.From(amount, p.userState.Currency, utils.TimeTruncate(date))
+	if err != nil {
+		return err
+	}
+	p.userState.SetConvertedAmount(amountInBaseCurrency)
+	return nil
 }

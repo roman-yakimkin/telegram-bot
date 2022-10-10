@@ -12,20 +12,21 @@ import (
 type CurrencyUpdate struct {
 	cr        repo.CurrencyRateRepo
 	seconds   time.Duration
-	earlyDate time.Time
+	daysCount int
 }
 
-func NewCurrencyUpdate(cr repo.CurrencyRateRepo, seconds time.Duration, earlyDate time.Time) *CurrencyUpdate {
+func NewCurrencyUpdate(cr repo.CurrencyRateRepo, seconds time.Duration, daysCount int) *CurrencyUpdate {
 	return &CurrencyUpdate{
 		cr:        cr,
 		seconds:   seconds,
-		earlyDate: earlyDate,
+		daysCount: daysCount,
 	}
 }
 
 func (c *CurrencyUpdate) Run(ctx context.Context) {
 	ticker := time.NewTicker(c.seconds)
 	date := utils.TimeTruncate(time.Now())
+	startDate := date.AddDate(0, 0, -c.daysCount)
 	go func(ctx context.Context, t *time.Ticker) {
 		for {
 			select {
@@ -34,22 +35,20 @@ func (c *CurrencyUpdate) Run(ctx context.Context) {
 				return
 			case <-t.C:
 				hasData := true
-				for hasData && date.After(c.earlyDate) {
-					curr, err := c.cr.GetAllByDate(date)
+				var err error
+				for hasData && date.After(startDate) {
+					hasData, err = c.cr.HasRatesByDate(date)
 					if err != nil {
-						log.Print("Error upon getting currency rates:", err)
-						time.Sleep(5 * time.Second)
+						log.Print("Error upon checking rates:", err)
 					}
-					hasData = len(curr) > 0
 					if hasData {
 						date = date.AddDate(0, 0, -1)
 					}
 				}
-				if !date.After(c.earlyDate) {
-					err := c.cr.LoadByDate(date)
+				if date.After(startDate) {
+					err = c.cr.LoadByDateIfEmpty(date)
 					if err != nil {
 						log.Print("Error upon getting currency rates:", err)
-						time.Sleep(5 * time.Second)
 					}
 				}
 			}

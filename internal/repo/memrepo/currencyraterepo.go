@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -40,8 +41,17 @@ func (r *сurrencyRateRepo) currencyURL(date time.Time) string {
 
 type RawCurrencyData struct {
 	Name    string  `json:"CharCode"`
-	Nominal int     `json:"nominal"`
+	Nominal int     `json:"Nominal"`
 	Value   float64 `json:"Value"`
+}
+
+func (r *сurrencyRateRepo) isRateUnset(resp *http.Response) bool {
+	cfg := r.service.GetConfig()
+	var rawData struct {
+		Explanation string `json:"explanation"`
+	}
+	err := json.NewDecoder(resp.Body).Decode(&rawData)
+	return err == nil && strings.Contains(rawData.Explanation, cfg.CurrencyRateUnset)
 }
 
 func (r *сurrencyRateRepo) LoadByDate(date time.Time) error {
@@ -49,6 +59,9 @@ func (r *сurrencyRateRepo) LoadByDate(date time.Time) error {
 	resp, err := http.Get(r.currencyURL(date))
 	if err != nil {
 		return err
+	}
+	if resp.StatusCode == http.StatusNotFound && r.isRateUnset(resp) {
+		return localerr.ErrCurrencyRateUnset
 	}
 	if resp.StatusCode != http.StatusOK {
 		return localerr.ErrCannotGetCurrencyRates
@@ -85,12 +98,26 @@ func (r *сurrencyRateRepo) LoadByDate(date time.Time) error {
 	return nil
 }
 
+func (r *сurrencyRateRepo) LoadByDateIfEmpty(date time.Time) error {
+	has, err := r.HasRatesByDate(date)
+	if err != nil {
+		return err
+	}
+	if !has {
+		err := r.LoadByDate(date)
+		if err == localerr.ErrCurrencyRateUnset {
+			return r.LoadByDateIfEmpty(date.AddDate(0, 0, -1))
+		}
+	}
+	return nil
+}
+
 func (r *сurrencyRateRepo) GetOneByDate(currName string, date time.Time) (*currencies.CurrencyRate, error) {
 	r.mx.Lock()
 	currenciesByDate, ok := r.c[date]
 	r.mx.Unlock()
 	if !ok {
-		err := r.LoadByDate(date)
+		err := r.LoadByDateIfEmpty(date)
 		if err != nil {
 			return nil, err
 		}
@@ -101,6 +128,11 @@ func (r *сurrencyRateRepo) GetOneByDate(currName string, date time.Time) (*curr
 		return nil, localerr.ErrCurrencyNotFound
 	}
 	return &currency, nil
+}
+
+func (r *сurrencyRateRepo) HasRatesByDate(date time.Time) (bool, error) {
+	_, ok := r.c[date]
+	return ok, nil
 }
 
 func (r *сurrencyRateRepo) GetAllByDate(date time.Time) ([]currencies.CurrencyRate, error) {

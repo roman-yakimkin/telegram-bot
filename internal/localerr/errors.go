@@ -6,5 +6,6 @@ var ErrUserStateNotFound = errors.New("user state not found")
 
 var ErrCurrencyNotFound = errors.New("currency not found")
 var ErrCannotGetCurrencyRates = errors.New("cannot get currency rates")
+var ErrCurrencyRateUnset = errors.New("currency rate is absent")
 
 var ErrIncorrectAmountValue = errors.New("incorrect amount value")
