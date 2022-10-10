@@ -1,15 +1,17 @@
 package tg
 
 import (
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/pkg/errors"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/msgprocessors"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/userstateprocessors"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/messages"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/reports"
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/services/userstateprocessors"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/store"
 )
 
 type TokenGetter interface {
@@ -17,23 +19,21 @@ type TokenGetter interface {
 }
 
 type Client struct {
-	client        *tgbotapi.BotAPI
-	expRepo       repo.ExpensesRepo
-	userStateRepo repo.UserStateRepo
-	rm            *reports.ReportManager
+	client   *tgbotapi.BotAPI
+	store    store.Store
+	currConv convertors.CurrencyConvertorFrom
 }
 
-func New(tokenGetter TokenGetter, er repo.ExpensesRepo, usr repo.UserStateRepo, rm *reports.ReportManager) (*Client, error) {
+func New(tokenGetter TokenGetter, store store.Store, currConv convertors.CurrencyConvertorFrom) (*Client, error) {
 	client, err := tgbotapi.NewBotAPI(tokenGetter.Token())
 	if err != nil {
 		return nil, errors.Wrap(err, "NewBotAPI")
 	}
 
 	return &Client{
-		client:        client,
-		expRepo:       er,
-		userStateRepo: usr,
-		rm:            rm,
+		client:   client,
+		store:    store,
+		currConv: currConv,
 	}, nil
 }
 
@@ -51,13 +51,18 @@ func (c *Client) setProcUserState(procs []userstateprocessors.UserStateProcessor
 	}
 }
 
-func (c *Client) ListenUpdates(msgModel *messages.Model) {
+func (c *Client) ListenUpdates(msgModel *messages.Model) error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
+	amountProcessor, err := userstateprocessors.NewAmountProcessor()
+	if err != nil {
+		return err
+	}
 	userStateProcessors := []userstateprocessors.UserStateProcessor{
 		userstateprocessors.NewCategoryProcessor(),
-		userstateprocessors.NewAmountProcessor(),
-		userstateprocessors.NewDateProcessor(),
+		amountProcessor,
+		userstateprocessors.NewDateProcessor(c.currConv),
+		userstateprocessors.NewCurrencyProcessor(c.store.Currency()),
 	}
 
 	updates := c.client.GetUpdatesChan(u)
@@ -68,9 +73,11 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 			uid := update.Message.From.ID
 			text := update.Message.Text
-			currentStatus := userstates.ExpectedCommand
-			userState, err := c.userStateRepo.GetOne(uid)
-			if err == nil {
+			userState, err := c.store.UserState().GetOne(uid)
+			if err != nil && errors.Is(err, localerr.ErrUserStateNotFound) {
+				userState = userstates.NewUserState(uid)
+			}
+			if err == nil && userState.GetStatus() != userstates.ExpectedCommand {
 				c.setProcUserState(userStateProcessors, userState)
 				for _, proc := range userStateProcessors {
 					if userState.GetStatus() == proc.GetProcessStatus() {
@@ -78,40 +85,26 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) {
 					}
 				}
 				if userState.Added() {
-					err := c.expRepo.Add(userState.ToExpense())
+					err := c.store.Expense().Add(userState.ToExpense())
 					if err != nil {
 						log.Println("error adding expense:", err)
 					}
 				}
-				currentStatus = userState.GetStatus()
 			}
 
-			newStatus, err := msgModel.IncomingMessage(messages.Message{
+			newStatus, err := msgModel.IncomingMessage(msgprocessors.Message{
 				Text:   text,
 				UserID: uid,
-			}, currentStatus)
+			}, userState)
 			if err != nil {
 				log.Println("error processing message:", err)
-				err = c.userStateRepo.Delete(uid)
-				if err != nil {
-					log.Println("error deleting user state:", err)
-				}
 			}
-			if newStatus == userstates.ExpectedCommand {
-				err = c.userStateRepo.Delete(uid)
-				if err != nil {
-					log.Println("error deleting user state:", err)
-				}
-			} else {
-				if userState == nil {
-					userState = &userstates.UserState{UserID: uid}
-				}
-				userState.SetStatus(newStatus)
-				err = c.userStateRepo.Save(userState)
-				if err != nil {
-					log.Println("error saving user state:", err)
-				}
+			userState.SetStatus(newStatus)
+			err = c.store.UserState().Save(userState)
+			if err != nil {
+				log.Println("error saving user state:", err)
 			}
 		}
 	}
+	return nil
 }
