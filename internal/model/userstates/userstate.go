@@ -1,21 +1,35 @@
 package userstates
 
 import (
-	"time"
+	"encoding/json"
 
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
 )
 
 const (
 	ExpectedCommand = iota
+
 	ExpectedCurrency
 	IncorrectCurrency
+
 	ExpectedCategory
 	IncorrectCategory
+
 	ExpectedAmount
 	IncorrectAmount
+	LimitExceededAmount
+
 	ExpectedDate
 	IncorrectDate
+
+	ExpectedSetLimitMonth
+	IncorrectSetLimitMonth
+
+	ExpectedDelLimitMonth
+	IncorrectDelLimitMonth
+
+	ExpectedSetLimitAmount
+	IncorrectSetLimitAmount
 )
 
 const (
@@ -25,22 +39,27 @@ const (
 )
 
 type UserState struct {
-	UserID        int64
-	Currency      string
-	status        int
-	category      string
-	amount        int
-	date          time.Time
-	addedCategory bool
-	addedAmount   int
-	addedDate     bool
+	UserID      int64
+	Currency    string
+	status      int
+	inputBuffer map[string]interface{}
 }
 
 func NewUserState(UserID int64) *UserState {
 	return &UserState{
-		UserID:   UserID,
-		Currency: "RUB",
-		status:   ExpectedCommand,
+		UserID:      UserID,
+		Currency:    "RUB",
+		status:      ExpectedCommand,
+		inputBuffer: make(map[string]interface{}),
+	}
+}
+
+func CreateUserState(UserID int64, Currency string, status int, inputBuffer map[string]interface{}) *UserState {
+	return &UserState{
+		UserID:      UserID,
+		Currency:    Currency,
+		status:      status,
+		inputBuffer: inputBuffer,
 	}
 }
 
@@ -54,57 +73,52 @@ func (s *UserState) GetStatus() int {
 	return s.status
 }
 
-func (s *UserState) cleanInputtedExpense() {
-	s.category = ""
-	s.amount = 0
-	s.date = time.Time{}
-	s.addedCategory = false
-	s.addedAmount = AmountNotAdded
-	s.addedDate = false
-}
-
 func (s *UserState) SetStatus(newStatus int) {
 	s.status = newStatus
 	switch newStatus {
 	case ExpectedCommand:
-		s.cleanInputtedExpense()
+		s.clearInputBuffer()
 	}
 }
 
-func (s *UserState) SetCategory(category string) {
-	s.category = category
-	s.addedCategory = true
+func (s *UserState) clearInputBuffer() {
+	for key := range s.inputBuffer {
+		delete(s.inputBuffer, key)
+	}
 }
 
-func (s *UserState) GetAmount() int {
-	return s.amount
+func (s *UserState) GetBufferValue(key string) interface{} {
+	return s.inputBuffer[key]
 }
 
-func (s *UserState) SetUnconvertedAmount(amount int) {
-	s.amount = amount
-	s.addedAmount = AmountAddedUnconverted
+func (s *UserState) SetBufferValue(key string, value interface{}) {
+	s.inputBuffer[key] = value
 }
 
-func (s *UserState) SetConvertedAmount(amount int) {
-	s.amount = amount
-	s.addedAmount = AmountAddedConverted
+func (s *UserState) BufferValueExists(key string) bool {
+	_, ok := s.inputBuffer[key]
+	return ok
 }
 
-func (s *UserState) SetDate(date time.Time) {
-	s.date = date
-	s.addedDate = true
+func (s *UserState) ClearBufferValue(key string) {
+	delete(s.inputBuffer, key)
 }
 
-func (s *UserState) Added() bool {
-	return s.addedCategory && s.addedAmount == AmountAddedConverted && s.addedDate
+func (s *UserState) GetJSONBuffer() (string, error) {
+	jsonBuffer, err := json.Marshal(s.inputBuffer)
+	if err != nil {
+		return "", err
+	}
+	return string(jsonBuffer), nil
 }
 
-func (s *UserState) ToExpense() *expenses.Expense {
-	return &expenses.Expense{
-		UserID:   s.UserID,
-		Category: s.category,
-		Amount:   s.amount,
-		Currency: s.Currency,
-		Date:     s.date,
+func (s *UserState) IfFloatTransformToInt(key string) (int, error) {
+	switch val := s.GetBufferValue(key).(type) {
+	case int:
+		return val, nil
+	case float64:
+		return int(val), nil
+	default:
+		return 0, localerr.ErrNotNumericValue
 	}
 }

@@ -2,6 +2,7 @@ package output
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -72,7 +73,11 @@ func (rm *reportManager) makeTextReport(userID int64, expData repo.ExpData) (str
 func (rm *reportManager) LastWeek(UserID int64) (string, error) {
 	timeStart := time.Now().AddDate(0, 0, -7)
 	timeEnd := time.Now()
-	expData := rm.store.Expense().ExpensesByUserAndTimeInterval(UserID, timeStart, timeEnd)
+	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(UserID, timeStart, timeEnd)
+	if err != nil {
+		log.Println("getting report data error:", err)
+		return "Ошибка при получении данных", err
+	}
 	result, err := rm.makeTextReport(UserID, expData)
 	if err != nil {
 		return "", err
@@ -83,13 +88,21 @@ func (rm *reportManager) LastWeek(UserID int64) (string, error) {
 func (rm *reportManager) LastMonth(UserID int64) (string, error) {
 	timeStart := time.Now().AddDate(0, -1, 0)
 	timeEnd := time.Now()
-	expData := rm.store.Expense().ExpensesByUserAndTimeInterval(UserID, timeStart, timeEnd)
+	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(UserID, timeStart, timeEnd)
+	if err != nil {
+		log.Println("getting report data error:", err)
+		return "Ошибка при получении данных", err
+	}
 	return rm.makeTextReport(UserID, expData)
 }
 
 func (rm *reportManager) LastYear(UserID int64) (string, error) {
 	timeStart := time.Now().AddDate(-1, 0, 0)
 	timeEnd := time.Now()
-	expData := rm.store.Expense().ExpensesByUserAndTimeInterval(UserID, timeStart, timeEnd)
+	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(UserID, timeStart, timeEnd)
+	if err != nil {
+		log.Println("getting report data error:", err)
+		return "Ошибка при получении данных", err
+	}
 	return rm.makeTextReport(UserID, expData)
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/msgprocessors"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/repoupdaters"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/userstateprocessors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/messages"
@@ -21,10 +22,10 @@ type TokenGetter interface {
 type Client struct {
 	client   *tgbotapi.BotAPI
 	store    store.Store
-	currConv convertors.CurrencyConvertorFrom
+	currConv convertors.CurrencyConvertor
 }
 
-func New(tokenGetter TokenGetter, store store.Store, currConv convertors.CurrencyConvertorFrom) (*Client, error) {
+func New(tokenGetter TokenGetter, store store.Store, currConv convertors.CurrencyConvertor) (*Client, error) {
 	client, err := tgbotapi.NewBotAPI(tokenGetter.Token())
 	if err != nil {
 		return nil, errors.Wrap(err, "NewBotAPI")
@@ -51,6 +52,12 @@ func (c *Client) setProcUserState(procs []userstateprocessors.UserStateProcessor
 	}
 }
 
+func (c *Client) setUpdatersUserState(updaters []repoupdaters.UserStateRepoUpdater, state *userstates.UserState) {
+	for _, updater := range updaters {
+		updater.SetUserState(state)
+	}
+}
+
 func (c *Client) ListenUpdates(msgModel *messages.Model) error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -58,11 +65,23 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) error {
 	if err != nil {
 		return err
 	}
+	setLimitAmountProcessor, err := userstateprocessors.NewSetLimitAmountProcessor(c.currConv)
+	if err != nil {
+		return err
+	}
 	userStateProcessors := []userstateprocessors.UserStateProcessor{
 		userstateprocessors.NewCategoryProcessor(),
 		amountProcessor,
-		userstateprocessors.NewDateProcessor(c.currConv),
+		userstateprocessors.NewDateProcessor(c.store, c.currConv),
 		userstateprocessors.NewCurrencyProcessor(c.store.Currency()),
+		userstateprocessors.NewSetLimitMonthProcessor(),
+		setLimitAmountProcessor,
+		userstateprocessors.NewDelLimitMonthProcessor(),
+	}
+	repoUpdaters := []repoupdaters.UserStateRepoUpdater{
+		repoupdaters.NewExpenseSaver(c.store.Expense()),
+		repoupdaters.NewSaveLimitSaver(c.store.Limit()),
+		repoupdaters.NewDelLimitSaver(c.store.Limit()),
 	}
 
 	updates := c.client.GetUpdatesChan(u)
@@ -79,15 +98,20 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) error {
 			}
 			if err == nil && userState.GetStatus() != userstates.ExpectedCommand {
 				c.setProcUserState(userStateProcessors, userState)
+				c.setUpdatersUserState(repoUpdaters, userState)
 				for _, proc := range userStateProcessors {
 					if userState.GetStatus() == proc.GetProcessStatus() {
 						proc.DoProcess(text)
+						break
 					}
 				}
-				if userState.Added() {
-					err := c.store.Expense().Add(userState.ToExpense())
-					if err != nil {
-						log.Println("error adding expense:", err)
+				for _, updater := range repoUpdaters {
+					if updater.ReadyToUpdate() {
+						err := updater.UpdateRepo()
+						if err != nil {
+							log.Println("repo update error:", err)
+						}
+						updater.ClearData()
 					}
 				}
 			}

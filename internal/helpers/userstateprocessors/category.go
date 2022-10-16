@@ -22,5 +22,5 @@ func (p *CategoryProcessor) GetProcessStatus() int {
 }
 
 func (p *CategoryProcessor) DoProcess(msgText string) {
-	p.userState.SetCategory(msgText)
+	p.userState.SetBufferValue(userstates.AddExpenseCategoryValue, msgText)
 }

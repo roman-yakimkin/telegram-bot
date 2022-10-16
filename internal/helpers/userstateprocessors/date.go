@@ -7,17 +7,20 @@ import (
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/utils"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/store"
 )
 
 type DateProcessor struct {
 	processStatus int
 	userState     *userstates.UserState
-	currConv      convertors.CurrencyConvertorFrom
+	store         store.Store
+	currConv      convertors.CurrencyConvertor
 }
 
-func NewDateProcessor(currConv convertors.CurrencyConvertorFrom) UserStateProcessor {
+func NewDateProcessor(store store.Store, currConv convertors.CurrencyConvertor) UserStateProcessor {
 	return &DateProcessor{
 		processStatus: userstates.ExpectedDate,
+		store:         store,
 		currConv:      currConv,
 	}
 }
@@ -35,7 +38,6 @@ func (p *DateProcessor) DoProcess(msgText string) {
 	var date time.Time
 	if msgText == "*" {
 		date = time.Now()
-		p.userState.SetDate(date)
 	} else {
 		var err error
 		date, err = time.Parse("2006-01-02", msgText)
@@ -44,19 +46,39 @@ func (p *DateProcessor) DoProcess(msgText string) {
 			return
 		}
 	}
-	if err = p.convertAndAddAmount(date); err != nil {
+	amountInBaseCurrency, err := p.convertAndAddAmount(date)
+	if err != nil {
 		log.Println("error on currency converting:", err)
 		return
 	}
-	p.userState.SetDate(date)
+
+	ok, err := p.checkLimitExceeding(amountInBaseCurrency, date)
+	if err != nil {
+		log.Println("error on limit exceeding checking:", err)
+		return
+	}
+	if !ok {
+		p.userState.SetStatus(userstates.LimitExceededAmount)
+		return
+	}
+
+	p.userState.SetBufferValue(userstates.AddExpenseDateValue, date)
 }
 
-func (p *DateProcessor) convertAndAddAmount(date time.Time) error {
-	amount := p.userState.GetAmount()
+func (p *DateProcessor) convertAndAddAmount(date time.Time) (int, error) {
+	amount, err := p.userState.IfFloatTransformToInt(userstates.AddExpenseAmountValue)
+	if err != nil {
+		log.Println("error upon getting expense amount", err)
+		return 0, err
+	}
 	amountInBaseCurrency, err := p.currConv.From(amount, p.userState.Currency, utils.TimeTruncate(date))
 	if err != nil {
-		return err
+		return 0, err
 	}
-	p.userState.SetConvertedAmount(amountInBaseCurrency)
-	return nil
+	p.userState.SetBufferValue(userstates.AddExpenseAmountValue, amountInBaseCurrency)
+	return amountInBaseCurrency, nil
+}
+
+func (p *DateProcessor) checkLimitExceeding(amount int, date time.Time) (bool, error) {
+	return p.store.MeetMonthlyLimit(p.userState.UserID, utils.TimeTruncate(date), amount, p.currConv)
 }

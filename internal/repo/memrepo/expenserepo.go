@@ -45,13 +45,13 @@ func (r *expensesRepo) Add(e *expenses.Expense) error {
 	return nil
 }
 
-func (r *expensesRepo) ExpensesByUserAndTimeInterval(UserID int64, timeStart time.Time, timeEnd time.Time) repo.ExpData {
+func (r *expensesRepo) ExpensesByUserAndTimeInterval(UserID int64, timeStart time.Time, timeEnd time.Time) (repo.ExpData, error) {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 	result := make(repo.ExpData)
 	userData, ok := r.e[UserID]
 	if !ok {
-		return result
+		return result, nil
 	}
 	for category, payments := range userData {
 		sums := make(repo.ExpCurrencyData)
@@ -69,5 +69,5 @@ func (r *expensesRepo) ExpensesByUserAndTimeInterval(UserID int64, timeStart tim
 			result[category] = sums
 		}
 	}
-	return result
+	return result, nil
 }

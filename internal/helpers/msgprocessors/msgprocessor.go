@@ -14,6 +14,9 @@ type Message struct {
 const InfoText = `/info - текущая справка
 /getcurrency - получение текущей валюты
 /setcurrency - установка текущей валюты
+/setlimit - установить лимит за месяц
+/dellimit - удалить лимит за месяц
+/limits - получение лимитов по месяцам
 /newexpense - добавление новой траты
 /lastweek - траты за последнюю неделю
 /lastmonth - траты за последний месяц

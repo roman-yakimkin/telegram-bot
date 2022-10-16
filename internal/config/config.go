@@ -22,6 +22,8 @@ type Config struct {
 	CurrencyMain             string         `yaml:"currency_main"`
 	CurrencyRateLoadInterval int            `yaml:"currency_rate_load_interval"`
 	Currencies               []CurrencyInfo `yaml:"currencies"`
+	ExpenseLimitDefault      int            `yaml:"expense_limit_default"`
+	DBConnect                string         `yaml:"db_connect"`
 }
 
 type Service struct {
