@@ -1,8 +1,12 @@
 package repo
 
-import "gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/currencies"
+import (
+	"context"
+
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/currencies"
+)
 
 type CurrencyRepo interface {
-	GetOne(currName string) (*currencies.Currency, error)
-	GetAll() ([]currencies.Currency, error)
+	GetOne(ctx context.Context, currName string) (*currencies.Currency, error)
+	GetAll(ctx context.Context) ([]currencies.Currency, error)
 }

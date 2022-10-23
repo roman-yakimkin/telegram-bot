@@ -1,6 +1,10 @@
 package msgprocessors
 
-import "gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+import (
+	"context"
+
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+)
 
 type MessageSender interface {
 	SendMessage(text string, userID int64) error
@@ -24,5 +28,5 @@ const InfoText = `/info - текущая справка
 
 type MessageProcessor interface {
 	ShouldProcess(msg Message, userState *userstates.UserState) bool
-	DoProcess(msg Message, userState *userstates.UserState) (int, error)
+	DoProcess(ctx context.Context, msg Message, userState *userstates.UserState) (int, error)
 }

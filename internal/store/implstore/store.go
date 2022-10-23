@@ -11,15 +11,23 @@ type store struct {
 	cu repo.CurrencyRepo
 	cr repo.CurrencyRateRepo
 	el repo.ExpenseLimitsRepo
+	cc repo.CurrencyConvertor
 }
 
-func NewStore(er repo.ExpensesRepo, us repo.UserStateRepo, cu repo.CurrencyRepo, cr repo.CurrencyRateRepo, el repo.ExpenseLimitsRepo) pkgstore.Store {
+func NewStore(
+	er repo.ExpensesRepo,
+	us repo.UserStateRepo,
+	cu repo.CurrencyRepo,
+	cr repo.CurrencyRateRepo,
+	el repo.ExpenseLimitsRepo,
+	cc repo.CurrencyConvertor) pkgstore.Store {
 	return &store{
 		er: er,
 		us: us,
 		cu: cu,
 		cr: cr,
 		el: el,
+		cc: cc,
 	}
 }
 
@@ -37,6 +45,14 @@ func (s *store) Currency() repo.CurrencyRepo {
 
 func (s *store) CurrencyRate() repo.CurrencyRateRepo {
 	return s.cr
+}
+
+func (s *store) CurrencyConvertorTo() repo.CurrencyConvertorTo {
+	return s.cc
+}
+
+func (s *store) CurrencyConvertorFrom() repo.CurrencyConvertorFrom {
+	return s.cc
 }
 
 func (s *store) Limit() repo.ExpenseLimitsRepo {

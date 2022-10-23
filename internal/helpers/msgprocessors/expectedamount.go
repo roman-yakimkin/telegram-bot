@@ -1,6 +1,8 @@
 package msgprocessors
 
 import (
+	"context"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/output"
 )
@@ -21,6 +23,6 @@ func (p *expectedAmountMessageProcessor) ShouldProcess(_ Message, userState *use
 	return userState.GetStatus() == userstates.ExpectedAmount
 }
 
-func (p *expectedAmountMessageProcessor) DoProcess(msg Message, userState *userstates.UserState) (int, error) {
+func (p *expectedAmountMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
 	return userstates.ExpectedDate, p.tgClient.SendMessage("Введите дату платежа в формате ГГГГ-ММ-ДД (* - текущая дата)", msg.UserID)
 }

@@ -1,6 +1,8 @@
 package msgprocessors
 
 import (
+	"context"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/output"
 )
@@ -21,6 +23,6 @@ func (p *limitExceededAmountMessageProcessor) ShouldProcess(_ Message, userState
 	return userState.GetStatus() == userstates.LimitExceededAmount
 }
 
-func (p *limitExceededAmountMessageProcessor) DoProcess(msg Message, userState *userstates.UserState) (int, error) {
+func (p *limitExceededAmountMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
 	return userstates.ExpectedAmount, p.tgClient.SendMessage("При данной сумме платежа возникнет превышение месячного лимита. Введите другую сумму или дату. Текущая валюта - "+userState.Currency, msg.UserID)
 }

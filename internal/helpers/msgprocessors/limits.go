@@ -1,6 +1,7 @@
 package msgprocessors
 
 import (
+	"context"
 	"log"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
@@ -23,8 +24,8 @@ func (p *limitsMessageProcessor) ShouldProcess(msg Message, _ *userstates.UserSt
 	return msg.Text == "/limits"
 }
 
-func (p *limitsMessageProcessor) DoProcess(msg Message, _ *userstates.UserState) (int, error) {
-	limits, err := p.output.Limits().Output(msg.UserID)
+func (p *limitsMessageProcessor) DoProcess(ctx context.Context, msg Message, _ *userstates.UserState) (int, error) {
+	limits, err := p.output.Limits().Output(ctx, msg.UserID)
 	if err != nil {
 		limits = "Ошибка при выводе лимитов"
 		log.Println("limit output error", err)

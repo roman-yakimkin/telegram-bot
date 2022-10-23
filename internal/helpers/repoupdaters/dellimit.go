@@ -1,6 +1,7 @@
 package repoupdaters
 
 import (
+	"context"
 	"log"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
@@ -8,7 +9,6 @@ import (
 )
 
 type delLimitSaver struct {
-	userState *userstates.UserState
 	limitRepo repo.ExpenseLimitsRepo
 }
 
@@ -18,30 +18,26 @@ func NewDelLimitSaver(limitRepo repo.ExpenseLimitsRepo) UserStateRepoUpdater {
 	}
 }
 
-func (s *delLimitSaver) SetUserState(userState *userstates.UserState) {
-	s.userState = userState
-}
-
-func (s *delLimitSaver) toLimitMonth() (int, error) {
-	index, err := s.userState.IfFloatTransformToInt(userstates.DeleteLimitMonthIndex)
+func (s *delLimitSaver) toLimitMonth(state *userstates.UserState) (int, error) {
+	index, err := state.IfFloatTransformToInt(userstates.DeleteLimitMonthIndex)
 	if err != nil {
 		log.Println("error upon getting limit month index: ", err)
 	}
 	return index, err
 }
 
-func (s *delLimitSaver) ReadyToUpdate() bool {
-	return s.userState.BufferValueExists(userstates.DeleteLimitMonthIndex)
+func (s *delLimitSaver) ReadyToUpdate(state *userstates.UserState) bool {
+	return state.BufferValueExists(userstates.DeleteLimitMonthIndex)
 }
 
-func (s *delLimitSaver) UpdateRepo() error {
-	index, err := s.toLimitMonth()
+func (s *delLimitSaver) UpdateRepo(ctx context.Context, state *userstates.UserState) error {
+	index, err := s.toLimitMonth(state)
 	if err != nil {
 		return err
 	}
-	return s.limitRepo.Delete(s.userState.UserID, index)
+	return s.limitRepo.Delete(ctx, state.UserID, index)
 }
 
-func (s *delLimitSaver) ClearData() {
-	s.userState.ClearBufferValue(userstates.DeleteLimitMonthIndex)
+func (s *delLimitSaver) ClearData(state *userstates.UserState) {
+	state.ClearBufferValue(userstates.DeleteLimitMonthIndex)
 }

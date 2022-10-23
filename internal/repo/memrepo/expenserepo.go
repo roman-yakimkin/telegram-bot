@@ -1,6 +1,7 @@
 package memrepo
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -28,7 +29,7 @@ func NewExpenseRepo() repo.ExpensesRepo {
 	}
 }
 
-func (r *expensesRepo) Add(e *expenses.Expense) error {
+func (r *expensesRepo) Add(_ context.Context, e *expenses.Expense, _ repo.ExpenseLimitChecker) error {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 	_, ok := r.e[e.UserID]
@@ -45,7 +46,7 @@ func (r *expensesRepo) Add(e *expenses.Expense) error {
 	return nil
 }
 
-func (r *expensesRepo) ExpensesByUserAndTimeInterval(UserID int64, timeStart time.Time, timeEnd time.Time) (repo.ExpData, error) {
+func (r *expensesRepo) ExpensesByUserAndTimeInterval(_ context.Context, UserID int64, timeStart time.Time, timeEnd time.Time) (repo.ExpData, error) {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 	result := make(repo.ExpData)

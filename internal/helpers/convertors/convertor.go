@@ -1,13 +1,16 @@
 package convertors
 
-import "time"
+import (
+	"context"
+	"time"
+)
 
 type CurrencyConvertorFrom interface {
-	From(amount int, currFrom string, date time.Time) (int, error)
+	From(ctx context.Context, amount int, currFrom string, date time.Time) (int, error)
 }
 
 type CurrencyConvertorTo interface {
-	To(amount int, currTo string, date time.Time) (int, error)
+	To(ctx context.Context, amount int, currTo string, date time.Time) (int, error)
 }
 
 type CurrencyConvertor interface {

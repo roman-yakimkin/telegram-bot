@@ -1,13 +1,14 @@
 package output
 
 import (
+	"context"
 	"fmt"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 )
 
 type CurrencyAmount interface {
-	Output(amount int, currName string) (string, error)
+	Output(ctx context.Context, amount int, currName string) (string, error)
 }
 
 type currencyAmount struct {
@@ -20,8 +21,8 @@ func NewCurrencyAmount(cr repo.CurrencyRepo) CurrencyAmount {
 	}
 }
 
-func (a *currencyAmount) Output(amount int, currName string) (string, error) {
-	currency, err := a.cr.GetOne(currName)
+func (a *currencyAmount) Output(ctx context.Context, amount int, currName string) (string, error) {
+	currency, err := a.cr.GetOne(ctx, currName)
 	if err != nil {
 		return "", err
 	}

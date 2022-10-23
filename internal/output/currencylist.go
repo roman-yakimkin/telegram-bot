@@ -1,6 +1,7 @@
 package output
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -8,7 +9,7 @@ import (
 )
 
 type CurrencyListOutput interface {
-	Output() (string, error)
+	Output(ctx context.Context) (string, error)
 }
 
 type currencyListOutput struct {
@@ -21,9 +22,9 @@ func NewCurrencyListOutput(currRepo repo.CurrencyRepo) CurrencyListOutput {
 	}
 }
 
-func (o *currencyListOutput) Output() (string, error) {
+func (o *currencyListOutput) Output(ctx context.Context) (string, error) {
 	var sb strings.Builder
-	currencies, err := o.currRepo.GetAll()
+	currencies, err := o.currRepo.GetAll(ctx)
 	if err != nil {
 		return "", nil
 	}

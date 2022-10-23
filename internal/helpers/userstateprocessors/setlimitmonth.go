@@ -1,6 +1,7 @@
 package userstateprocessors
 
 import (
+	"context"
 	"strconv"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
@@ -8,7 +9,6 @@ import (
 
 type setLimitMonthProcessor struct {
 	processStatus int
-	userState     *userstates.UserState
 }
 
 func NewSetLimitMonthProcessor() UserStateProcessor {
@@ -17,27 +17,23 @@ func NewSetLimitMonthProcessor() UserStateProcessor {
 	}
 }
 
-func (p *setLimitMonthProcessor) SetUserState(userState *userstates.UserState) {
-	p.userState = userState
-}
-
 func (p *setLimitMonthProcessor) GetProcessStatus() int {
 	return p.processStatus
 }
 
-func (p *setLimitMonthProcessor) DoProcess(msgText string) {
+func (p *setLimitMonthProcessor) DoProcess(_ context.Context, state *userstates.UserState, msgText string) {
 	if msgText == "*" {
-		p.userState.SetStatus(userstates.ExpectedCommand)
+		state.SetStatus(userstates.ExpectedCommand)
 		return
 	}
 	limit, err := strconv.Atoi(msgText)
 	if err != nil {
-		p.userState.SetStatus(userstates.IncorrectSetLimitMonth)
+		state.SetStatus(userstates.IncorrectSetLimitMonth)
 		return
 	}
 	if limit < 1 || limit > 12 {
-		p.userState.SetStatus(userstates.IncorrectSetLimitMonth)
+		state.SetStatus(userstates.IncorrectSetLimitMonth)
 		return
 	}
-	p.userState.SetBufferValue(userstates.SetLimitMonthIndex, limit)
+	state.SetBufferValue(userstates.SetLimitMonthIndex, limit)
 }

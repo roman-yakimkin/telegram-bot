@@ -1,6 +1,7 @@
 package userstateprocessors
 
 import (
+	"context"
 	"strings"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
@@ -9,7 +10,6 @@ import (
 
 type currencyProcessor struct {
 	processStatus int
-	userState     *userstates.UserState
 	currRepo      repo.CurrencyRepo
 }
 
@@ -20,29 +20,25 @@ func NewCurrencyProcessor(currRepo repo.CurrencyRepo) UserStateProcessor {
 	}
 }
 
-func (p *currencyProcessor) SetUserState(userState *userstates.UserState) {
-	p.userState = userState
-}
-
 func (p *currencyProcessor) GetProcessStatus() int {
 	return p.processStatus
 }
 
-func (p *currencyProcessor) DoProcess(msgText string) {
+func (p *currencyProcessor) DoProcess(ctx context.Context, state *userstates.UserState, msgText string) {
 	if msgText == "*" {
-		p.userState.SetStatus(userstates.ExpectedCommand)
+		state.SetStatus(userstates.ExpectedCommand)
 		return
 	}
-	currencies, err := p.currRepo.GetAll()
+	currencies, err := p.currRepo.GetAll(ctx)
 	if err != nil {
-		p.userState.SetStatus(userstates.IncorrectCurrency)
+		state.SetStatus(userstates.IncorrectCurrency)
 		return
 	}
 	for _, currency := range currencies {
 		if strings.EqualFold(currency.Name, msgText) {
-			p.userState.Currency = strings.ToUpper(currency.Name)
+			state.Currency = strings.ToUpper(currency.Name)
 			return
 		}
 	}
-	p.userState.SetStatus(userstates.IncorrectCurrency)
+	state.SetStatus(userstates.IncorrectCurrency)
 }

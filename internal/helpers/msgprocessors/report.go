@@ -1,6 +1,7 @@
 package msgprocessors
 
 import (
+	"context"
 	"log"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
@@ -23,16 +24,16 @@ func (p *reportMessageProcessor) ShouldProcess(msg Message, _ *userstates.UserSt
 	return msg.Text == "/lastweek" || msg.Text == "/lastmonth" || msg.Text == "/lastyear"
 }
 
-func (p *reportMessageProcessor) DoProcess(msg Message, _ *userstates.UserState) (int, error) {
+func (p *reportMessageProcessor) DoProcess(ctx context.Context, msg Message, _ *userstates.UserState) (int, error) {
 	var report string
 	var err error
 	switch msg.Text {
 	case "/lastweek":
-		report, err = p.output.Reports().LastWeek(msg.UserID)
+		report, err = p.output.Reports().LastWeek(ctx, msg.UserID)
 	case "/lastmonth":
-		report, err = p.output.Reports().LastMonth(msg.UserID)
+		report, err = p.output.Reports().LastMonth(ctx, msg.UserID)
 	case "/lastyear":
-		report, err = p.output.Reports().LastYear(msg.UserID)
+		report, err = p.output.Reports().LastYear(ctx, msg.UserID)
 	}
 	if err != nil {
 		log.Println("creating report error: ", err)

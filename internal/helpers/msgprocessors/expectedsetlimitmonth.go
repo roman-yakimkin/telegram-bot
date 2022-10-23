@@ -1,6 +1,8 @@
 package msgprocessors
 
 import (
+	"context"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/output"
 )
@@ -21,6 +23,6 @@ func (p *expectedSetLimitMonthMessageProcessor) ShouldProcess(_ Message, userSta
 	return userState.GetStatus() == userstates.ExpectedSetLimitMonth
 }
 
-func (p *expectedSetLimitMonthMessageProcessor) DoProcess(msg Message, userState *userstates.UserState) (int, error) {
+func (p *expectedSetLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
 	return userstates.ExpectedSetLimitAmount, p.tgClient.SendMessage("Введите сумму лимита. Текущая валюта - "+userState.Currency, msg.UserID)
 }

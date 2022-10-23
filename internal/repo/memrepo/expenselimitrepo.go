@@ -1,6 +1,8 @@
 package memrepo
 
 import (
+	"context"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/config"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
@@ -21,7 +23,7 @@ func NewExpenseLimitsRepo(service *config.Service) repo.ExpenseLimitsRepo {
 	}
 }
 
-func (r *expenseLimitsRepo) GetOne(UserID int64, index int) (*expenses.ExpenseLimit, error) {
+func (r *expenseLimitsRepo) GetOne(_ context.Context, UserID int64, index int) (*expenses.ExpenseLimit, error) {
 	limits, ok := r.limits[UserID]
 	if !ok {
 		return &expenses.ExpenseLimit{
@@ -37,10 +39,10 @@ func (r *expenseLimitsRepo) GetOne(UserID int64, index int) (*expenses.ExpenseLi
 	return &limit, nil
 }
 
-func (r *expenseLimitsRepo) GetAll(UserID int64) ([]expenses.ExpenseLimit, error) {
+func (r *expenseLimitsRepo) GetAll(ctx context.Context, UserID int64) ([]expenses.ExpenseLimit, error) {
 	result := make([]expenses.ExpenseLimit, 12)
 	for i := 0; i < len(result); i++ {
-		limit, err := r.GetOne(UserID, i+1)
+		limit, err := r.GetOne(ctx, UserID, i+1)
 		if err != nil {
 			return nil, err
 		}
@@ -49,7 +51,7 @@ func (r *expenseLimitsRepo) GetAll(UserID int64) ([]expenses.ExpenseLimit, error
 	return result, nil
 }
 
-func (r *expenseLimitsRepo) Save(el *expenses.ExpenseLimit) error {
+func (r *expenseLimitsRepo) Save(_ context.Context, el *expenses.ExpenseLimit) error {
 	_, ok := r.limits[el.UserID]
 	if !ok {
 		r.limits[el.UserID] = make(ExpenseUserLimits, 12)
@@ -58,7 +60,7 @@ func (r *expenseLimitsRepo) Save(el *expenses.ExpenseLimit) error {
 	return nil
 }
 
-func (r *expenseLimitsRepo) Delete(UserID int64, index int) error {
+func (r *expenseLimitsRepo) Delete(_ context.Context, UserID int64, index int) error {
 	limits, ok := r.limits[UserID]
 	if !ok {
 		return localerr.ErrExpenseLimitNotFound

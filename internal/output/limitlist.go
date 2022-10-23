@@ -1,6 +1,7 @@
 package output
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"time"
@@ -9,7 +10,7 @@ import (
 )
 
 type LimitListOutput interface {
-	Output(UserID int64) (string, error)
+	Output(ctx context.Context, UserID int64) (string, error)
 }
 
 type limitListOutput struct {
@@ -24,14 +25,14 @@ func NewLimitListOutput(limitRepo repo.ExpenseLimitsRepo, outputAmount CurrencyA
 	}
 }
 
-func (o *limitListOutput) Output(UserID int64) (string, error) {
+func (o *limitListOutput) Output(ctx context.Context, UserID int64) (string, error) {
 	var sb strings.Builder
-	limits, err := o.limitRepo.GetAll(UserID)
+	limits, err := o.limitRepo.GetAll(ctx, UserID)
 	if err != nil {
 		return "", err
 	}
 	for i, limit := range limits {
-		amount, err := o.outputAmount.Output(limit.Value, "RUB")
+		amount, err := o.outputAmount.Output(ctx, limit.Value, "RUB")
 		if err != nil {
 			return "", err
 		}

@@ -37,7 +37,7 @@ func (c *CurrencyUpdate) Run(ctx context.Context) {
 				hasData := true
 				var err error
 				for hasData && date.After(startDate) {
-					hasData, err = c.cr.HasRatesByDate(date)
+					hasData, err = c.cr.HasRatesByDate(ctx, date)
 					if err != nil {
 						log.Print("Error upon checking rates:", err)
 					}
@@ -46,7 +46,7 @@ func (c *CurrencyUpdate) Run(ctx context.Context) {
 					}
 				}
 				if date.After(startDate) {
-					err = c.cr.LoadByDateIfEmpty(date)
+					err = c.cr.LoadByDateIfEmpty(ctx, date)
 					if err != nil {
 						log.Print("Error upon getting currency rates:", err)
 					}

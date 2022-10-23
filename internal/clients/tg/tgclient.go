@@ -1,6 +1,7 @@
 package tg
 
 import (
+	"context"
 	"log"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -46,19 +47,7 @@ func (c *Client) SendMessage(text string, userID int64) error {
 	return nil
 }
 
-func (c *Client) setProcUserState(procs []userstateprocessors.UserStateProcessor, state *userstates.UserState) {
-	for _, proc := range procs {
-		proc.SetUserState(state)
-	}
-}
-
-func (c *Client) setUpdatersUserState(updaters []repoupdaters.UserStateRepoUpdater, state *userstates.UserState) {
-	for _, updater := range updaters {
-		updater.SetUserState(state)
-	}
-}
-
-func (c *Client) ListenUpdates(msgModel *messages.Model) error {
+func (c *Client) ListenUpdates(ctx context.Context, msgModel *messages.Model) error {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	amountProcessor, err := userstateprocessors.NewAmountProcessor()
@@ -79,7 +68,7 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) error {
 		userstateprocessors.NewDelLimitMonthProcessor(),
 	}
 	repoUpdaters := []repoupdaters.UserStateRepoUpdater{
-		repoupdaters.NewExpenseSaver(c.store.Expense()),
+		repoupdaters.NewExpenseSaver(c.store.Expense(), c.store),
 		repoupdaters.NewSaveLimitSaver(c.store.Limit()),
 		repoupdaters.NewDelLimitSaver(c.store.Limit()),
 	}
@@ -92,31 +81,29 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) error {
 			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
 			uid := update.Message.From.ID
 			text := update.Message.Text
-			userState, err := c.store.UserState().GetOne(uid)
+			userState, err := c.store.UserState().GetOne(ctx, uid)
 			if err != nil && errors.Is(err, localerr.ErrUserStateNotFound) {
 				userState = userstates.NewUserState(uid)
 			}
 			if err == nil && userState.GetStatus() != userstates.ExpectedCommand {
-				c.setProcUserState(userStateProcessors, userState)
-				c.setUpdatersUserState(repoUpdaters, userState)
 				for _, proc := range userStateProcessors {
 					if userState.GetStatus() == proc.GetProcessStatus() {
-						proc.DoProcess(text)
+						proc.DoProcess(ctx, userState, text)
 						break
 					}
 				}
 				for _, updater := range repoUpdaters {
-					if updater.ReadyToUpdate() {
-						err := updater.UpdateRepo()
+					if updater.ReadyToUpdate(userState) {
+						err := updater.UpdateRepo(ctx, userState)
 						if err != nil {
 							log.Println("repo update error:", err)
 						}
-						updater.ClearData()
+						updater.ClearData(userState)
 					}
 				}
 			}
 
-			newStatus, err := msgModel.IncomingMessage(msgprocessors.Message{
+			newStatus, err := msgModel.IncomingMessage(ctx, msgprocessors.Message{
 				Text:   text,
 				UserID: uid,
 			}, userState)
@@ -124,7 +111,7 @@ func (c *Client) ListenUpdates(msgModel *messages.Model) error {
 				log.Println("error processing message:", err)
 			}
 			userState.SetStatus(newStatus)
-			err = c.store.UserState().Save(userState)
+			err = c.store.UserState().Save(ctx, userState)
 			if err != nil {
 				log.Println("error saving user state:", err)
 			}

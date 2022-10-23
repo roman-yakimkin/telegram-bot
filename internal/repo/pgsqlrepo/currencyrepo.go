@@ -9,21 +9,19 @@ import (
 )
 
 type currencyRepo struct {
-	ctx  context.Context
 	pool *pgxpool.Pool
 }
 
-func NewCurrencyRepo(ctx context.Context, pool *pgxpool.Pool) repo.CurrencyRepo {
+func NewCurrencyRepo(pool *pgxpool.Pool) repo.CurrencyRepo {
 	return &currencyRepo{
-		ctx:  ctx,
 		pool: pool,
 	}
 }
 
-func (r *currencyRepo) GetOne(currName string) (*currencies.Currency, error) {
+func (r *currencyRepo) GetOne(ctx context.Context, currName string) (*currencies.Currency, error) {
 	var curr currencies.Currency
-	err := r.pool.QueryRow(r.ctx,
-		"select id, display from currency where id=$1", currName).
+	err := r.pool.QueryRow(ctx,
+		"select code, display from currency where code=$1", currName).
 		Scan(&curr.Name, &curr.Display)
 	if err != nil {
 		return nil, err
@@ -31,9 +29,9 @@ func (r *currencyRepo) GetOne(currName string) (*currencies.Currency, error) {
 	return &curr, nil
 }
 
-func (r *currencyRepo) GetAll() ([]currencies.Currency, error) {
+func (r *currencyRepo) GetAll(ctx context.Context) ([]currencies.Currency, error) {
 	var result []currencies.Currency
-	rows, err := r.pool.Query(r.ctx, "select id, display from currency")
+	rows, err := r.pool.Query(ctx, "select code, display from currency")
 	if err != nil {
 		return nil, err
 	}

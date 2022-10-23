@@ -1,6 +1,8 @@
 package msgprocessors
 
 import (
+	"context"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/output"
 )
@@ -21,6 +23,6 @@ func (p *infoMessageProcessor) ShouldProcess(msg Message, _ *userstates.UserStat
 	return msg.Text == "/info"
 }
 
-func (p *infoMessageProcessor) DoProcess(msg Message, _ *userstates.UserState) (int, error) {
+func (p *infoMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
 	return userstates.ExpectedCommand, p.tgClient.SendMessage(InfoText, msg.UserID)
 }

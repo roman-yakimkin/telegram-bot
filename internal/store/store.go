@@ -1,15 +1,15 @@
 package store
 
 import (
+	"context"
 	"time"
 
-	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/currencies"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 )
 
 type UserCurrencyGetter interface {
-	UserCurrencyRate(UserID int64, date time.Time) (*currencies.CurrencyRate, error)
+	UserCurrencyRate(ctx context.Context, UserID int64, date time.Time) (*currencies.CurrencyRate, error)
 }
 
 type Store interface {
@@ -18,6 +18,9 @@ type Store interface {
 	Currency() repo.CurrencyRepo
 	UserState() repo.UserStateRepo
 	Expense() repo.ExpensesRepo
+	CurrencyConvertorFrom() repo.CurrencyConvertorFrom
+	CurrencyConvertorTo() repo.CurrencyConvertorTo
 	Limit() repo.ExpenseLimitsRepo
-	MeetMonthlyLimit(UserID int64, date time.Time, amountInRub int, curr convertors.CurrencyConvertorTo) (bool, error)
+
+	MeetMonthlyLimit(ctx context.Context, UserID int64, date time.Time, amountInRub int, curr repo.CurrencyConvertorTo) (bool, error)
 }

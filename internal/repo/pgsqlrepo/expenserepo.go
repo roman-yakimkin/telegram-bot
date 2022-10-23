@@ -2,6 +2,7 @@ package pgsqlrepo
 
 import (
 	"context"
+	"log"
 	"strings"
 	"time"
 
@@ -14,71 +15,71 @@ import (
 )
 
 type expensesRepo struct {
-	ctx     context.Context
 	pool    *pgxpool.Pool
 	service *config.Service
 }
 
-func NewExpenseRepo(ctx context.Context, pool *pgxpool.Pool, service *config.Service) repo.ExpensesRepo {
+func NewExpenseRepo(pool *pgxpool.Pool, service *config.Service) repo.ExpensesRepo {
 	return &expensesRepo{
-		ctx:     ctx,
 		pool:    pool,
 		service: service,
 	}
 }
 
-func (r *expensesRepo) Add(e *expenses.Expense) error {
-	tx, err := r.pool.Begin(r.ctx)
+func (r *expensesRepo) Add(ctx context.Context, e *expenses.Expense, limitChecker repo.ExpenseLimitChecker) error {
+	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
-	catId, err := r.getCategoryId(tx, e.Category)
+	catId, err := r.getCategoryId(ctx, tx, e.Category)
 	if err != nil {
-		err := tx.Rollback(r.ctx)
-		if err != nil {
-			return err
+		if rErr := tx.Rollback(ctx); rErr != nil {
+			log.Println("rollback error", rErr)
 		}
 		return err
 	}
-	_, err = tx.Exec(r.ctx, "insert into expenses (user_id, category_id, currency_id, amount, date) values ($1, $2, $3, $4, $5)",
+	_, err = tx.Exec(ctx, "insert into expenses (user_id, category_id, currency_code, amount, date) values ($1, $2, $3, $4, $5)",
 		e.UserID, catId, e.Currency, e.Amount, utils.TimeTruncate(e.Date))
 	if err != nil {
-		err := tx.Rollback(r.ctx)
-		if err != nil {
-			return err
+		if rErr := tx.Rollback(ctx); rErr != nil {
+			log.Println("rollback error", rErr)
 		}
 		return err
 	}
-	err = tx.Commit(r.ctx)
+	ok, err := limitChecker.MeetMonthlyLimit(ctx, e.UserID, utils.TimeTruncate(e.Date), e.Amount, limitChecker.CurrencyConvertorTo())
+	if !ok || err != nil {
+		if !ok {
+			log.Println("monthly limit exceeded")
+		}
+		if rErr := tx.Rollback(ctx); rErr != nil {
+			log.Println("rollback error", rErr)
+		}
+		return err
+	}
+	err = tx.Commit(ctx)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *expensesRepo) getCategoryId(tx pgx.Tx, catName string) (int, error) {
+func (r *expensesRepo) getCategoryId(ctx context.Context, tx pgx.Tx, catName string) (int, error) {
 	var id int
 	var name string
-	err := tx.QueryRow(r.ctx, "select id, name from categories where upper(name)=$1", strings.ToUpper(catName)).
+	err := tx.QueryRow(ctx, "select id, name from categories where upper(name)=$1", strings.ToUpper(catName)).
 		Scan(&id, &name)
-	if err == nil {
+	if err == pgx.ErrNoRows {
+		err := tx.QueryRow(ctx, "insert into categories (name) values ($1) returning id", catName).
+			Scan(&id)
 		return id, err
 	}
-	if err == pgx.ErrNoRows {
-		err := tx.QueryRow(r.ctx, "insert into categories (name) values ($1) returning id", catName).
-			Scan(&id)
-		if err != nil {
-			return 0, err
-		}
-		return id, nil
-	}
-	return 0, err
+	return id, err
 }
 
-func (r *expensesRepo) ExpensesByUserAndTimeInterval(UserID int64, timeStart time.Time, timeEnd time.Time) (repo.ExpData, error) {
+func (r *expensesRepo) ExpensesByUserAndTimeInterval(ctx context.Context, UserID int64, timeStart time.Time, timeEnd time.Time) (repo.ExpData, error) {
 	result := make(repo.ExpData)
-	rows, err := r.pool.Query(r.ctx, `
-			select c.name as category_name, e.currency_id, e.amount, e.date 
+	rows, err := r.pool.Query(ctx, `
+			select c.name as category_name, e.currency_code, e.amount, e.date 
 			from expenses e inner join categories c on c.id = e.category_id
 			where e.user_id = $1 and e.date between $2 and $3`, UserID, utils.TimeTruncate(timeStart), utils.TimeTruncate(timeEnd))
 	if err != nil {
@@ -93,10 +94,10 @@ func (r *expensesRepo) ExpensesByUserAndTimeInterval(UserID int64, timeStart tim
 		if err != nil {
 			return nil, err
 		}
-		if result[catName] == nil {
+		if _, ok := result[catName]; !ok {
 			result[catName] = make(repo.ExpCurrencyData)
 		}
-		if result[catName][curr] == nil {
+		if _, ok := result[catName][curr]; !ok {
 			result[catName][curr] = make(repo.ExpCurrencyDayData)
 		}
 		result[catName][curr][date] += amount

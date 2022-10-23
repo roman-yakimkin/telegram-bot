@@ -1,6 +1,8 @@
 package msgprocessors
 
 import (
+	"context"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/output"
 )
@@ -21,6 +23,6 @@ func (p *incorrectSetLimitMonthMessageProcessor) ShouldProcess(_ Message, userSt
 	return userState.GetStatus() == userstates.IncorrectSetLimitMonth
 }
 
-func (p *incorrectSetLimitMonthMessageProcessor) DoProcess(msg Message, _ *userstates.UserState) (int, error) {
+func (p *incorrectSetLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
 	return userstates.ExpectedSetLimitMonth, p.tgClient.SendMessage("Месяц задан неверно. Введите месяц (1 - 12)", msg.UserID)
 }

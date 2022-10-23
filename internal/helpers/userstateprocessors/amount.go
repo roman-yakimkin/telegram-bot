@@ -1,6 +1,7 @@
 package userstateprocessors
 
 import (
+	"context"
 	"regexp"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/utils"
@@ -9,7 +10,6 @@ import (
 
 type amountProcessor struct {
 	processStatus int
-	userState     *userstates.UserState
 	amountRegExp  *regexp.Regexp
 }
 
@@ -28,16 +28,12 @@ func (p *amountProcessor) GetProcessStatus() int {
 	return p.processStatus
 }
 
-func (p *amountProcessor) SetUserState(userState *userstates.UserState) {
-	p.userState = userState
-}
-
-func (p *amountProcessor) DoProcess(msgText string) {
+func (p *amountProcessor) DoProcess(_ context.Context, state *userstates.UserState, msgText string) {
 	amountInt, amountFrac, err := utils.ParseMsgText(msgText, p.amountRegExp)
 	if err != nil {
-		p.userState.SetStatus(userstates.IncorrectAmount)
+		state.SetStatus(userstates.IncorrectAmount)
 		return
 	}
 	amount := amountInt*100 + amountFrac
-	p.userState.SetBufferValue(userstates.AddExpenseAmountValue, amount)
+	state.SetBufferValue(userstates.AddExpenseAmountValue, amount)
 }

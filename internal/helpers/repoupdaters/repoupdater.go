@@ -1,10 +1,13 @@
 package repoupdaters
 
-import "gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+import (
+	"context"
+
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+)
 
 type UserStateRepoUpdater interface {
-	SetUserState(userState *userstates.UserState)
-	ReadyToUpdate() bool
-	UpdateRepo() error
-	ClearData()
+	ReadyToUpdate(state *userstates.UserState) bool
+	UpdateRepo(ctx context.Context, state *userstates.UserState) error
+	ClearData(state *userstates.UserState)
 }

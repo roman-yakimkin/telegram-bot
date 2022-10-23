@@ -1,6 +1,7 @@
 package memrepo
 
 import (
+	"context"
 	"sync"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
@@ -19,7 +20,7 @@ func NewUserStateRepo() repo.UserStateRepo {
 	}
 }
 
-func (r *userStateRepo) GetOne(UserId int64) (*userstates.UserState, error) {
+func (r *userStateRepo) GetOne(_ context.Context, UserId int64) (*userstates.UserState, error) {
 	r.mx.Lock()
 	userState, ok := r.states[UserId]
 	r.mx.Unlock()
@@ -29,7 +30,7 @@ func (r *userStateRepo) GetOne(UserId int64) (*userstates.UserState, error) {
 	return &userState, nil
 }
 
-func (r *userStateRepo) Save(state *userstates.UserState) error {
+func (r *userStateRepo) Save(_ context.Context, state *userstates.UserState) error {
 	state.BeforeSave()
 	r.mx.Lock()
 	r.states[state.UserID] = *state
@@ -37,7 +38,7 @@ func (r *userStateRepo) Save(state *userstates.UserState) error {
 	return nil
 }
 
-func (r *userStateRepo) Delete(UserID int64) error {
+func (r *userStateRepo) Delete(_ context.Context, UserID int64) error {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 	_, ok := r.states[UserID]
@@ -45,5 +46,9 @@ func (r *userStateRepo) Delete(UserID int64) error {
 		return localerr.ErrUserStateNotFound
 	}
 	delete(r.states, UserID)
+	return nil
+}
+
+func (r *userStateRepo) ClearStatus(_ context.Context) error {
 	return nil
 }

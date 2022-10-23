@@ -1,6 +1,7 @@
 package userstateprocessors
 
 import (
+	"context"
 	"log"
 	"regexp"
 	"time"
@@ -12,7 +13,6 @@ import (
 
 type setLimitAmountProcessor struct {
 	processStatus int
-	userState     *userstates.UserState
 	amountRegExp  *regexp.Regexp
 	currConv      convertors.CurrencyConvertorFrom
 }
@@ -33,29 +33,25 @@ func (p *setLimitAmountProcessor) GetProcessStatus() int {
 	return p.processStatus
 }
 
-func (p *setLimitAmountProcessor) SetUserState(userState *userstates.UserState) {
-	p.userState = userState
-}
-
-func (p *setLimitAmountProcessor) DoProcess(msgText string) {
+func (p *setLimitAmountProcessor) DoProcess(ctx context.Context, state *userstates.UserState, msgText string) {
 	amountInt, amountFrac, err := utils.ParseMsgText(msgText, p.amountRegExp)
 	if err != nil {
-		p.userState.SetStatus(userstates.IncorrectSetLimitAmount)
+		state.SetStatus(userstates.IncorrectSetLimitAmount)
 		return
 	}
 	amount := amountInt*100 + amountFrac
-	if err = p.convertAndAddAmount(amount); err != nil {
+	if err = p.convertAndAddAmount(ctx, state, amount); err != nil {
 		log.Println("error on currency converting:", err)
-		p.userState.SetStatus(userstates.ExpectedCommand)
+		state.SetStatus(userstates.ExpectedCommand)
 		return
 	}
 }
 
-func (p *setLimitAmountProcessor) convertAndAddAmount(unconvertedAmount int) error {
-	amountInBaseCurrency, err := p.currConv.From(unconvertedAmount, p.userState.Currency, utils.TimeTruncate(time.Now()))
+func (p *setLimitAmountProcessor) convertAndAddAmount(ctx context.Context, state *userstates.UserState, unconvertedAmount int) error {
+	amountInBaseCurrency, err := p.currConv.From(ctx, unconvertedAmount, state.Currency, utils.TimeTruncate(time.Now()))
 	if err != nil {
 		return err
 	}
-	p.userState.SetBufferValue(userstates.SetLimitMonthValue, amountInBaseCurrency)
+	state.SetBufferValue(userstates.SetLimitMonthValue, amountInBaseCurrency)
 	return nil
 }

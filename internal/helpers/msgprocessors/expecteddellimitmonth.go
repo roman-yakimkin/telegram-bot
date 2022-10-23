@@ -1,6 +1,8 @@
 package msgprocessors
 
 import (
+	"context"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/output"
 )
@@ -21,6 +23,6 @@ func (p *expectedDelLimitMonthMessageProcessor) ShouldProcess(_ Message, userSta
 	return userState.GetStatus() == userstates.ExpectedDelLimitMonth
 }
 
-func (p *expectedDelLimitMonthMessageProcessor) DoProcess(msg Message, userState *userstates.UserState) (int, error) {
+func (p *expectedDelLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
 	return userstates.ExpectedCommand, p.tgClient.SendMessage("Лимит удален до состояния по умолчанию", msg.UserID)
 }

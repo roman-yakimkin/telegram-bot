@@ -1,6 +1,8 @@
 package msgprocessors
 
 import (
+	"context"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/output"
 )
@@ -21,6 +23,6 @@ func (p *expectedSetLimitAmountMessageProcessor) ShouldProcess(_ Message, userSt
 	return userState.GetStatus() == userstates.ExpectedSetLimitAmount
 }
 
-func (p *expectedSetLimitAmountMessageProcessor) DoProcess(msg Message, userState *userstates.UserState) (int, error) {
+func (p *expectedSetLimitAmountMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
 	return userstates.ExpectedCommand, p.tgClient.SendMessage("Лимит установлен", msg.UserID)
 }

@@ -1,22 +1,22 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS currency (
-    id char(3) not null primary key,
+    code char(3) not null primary key,
     display VARCHAR(50)
 );
 
 CREATE TABLE IF NOT EXISTS currency_rates (
-    currency_id char(3) not null references currency(id),
+    currency_code char(3) not null references currency(code),
     date timestamp not null,
     rate real,
-    PRIMARY KEY (currency_id, date)
+    PRIMARY KEY (currency_code, date)
 );
 
 CREATE INDEX currency_rates_date on currency_rates(date);
 
 CREATE TABLE IF NOT EXISTS user_states (
     user_id bigint not null primary key,
-    currency_id char(3) not null references currency(id),
+    currency_code char(3) not null references currency(code),
     status int not null default 0,
     input_buffer jsonb
 );
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS expenses (
     id serial not null primary key,
     user_id bigint not null,
     category_id int not null references categories(id),
-    currency_id char(3) not null references currency(id),
+    currency_code char(3) not null references currency(code),
     amount int not null default 0,
     date timestamp not null
 );
