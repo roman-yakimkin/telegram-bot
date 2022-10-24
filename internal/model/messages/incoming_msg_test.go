@@ -23,7 +23,7 @@ func Test_OnStartCommand_ShouldAnswerWithIntroMessage(t *testing.T) {
 
 	_, err := model.IncomingMessage(ctx, msgprocessors.Message{
 		Text:   "/start",
-		UserID: uid,
+		UserId: uid,
 	}, userState)
 
 	assert.NoError(t, err)
@@ -41,7 +41,7 @@ func Test_OnInfoCommand_ShouldAnswerWithInfoMessage(t *testing.T) {
 
 	_, err := model.IncomingMessage(ctx, msgprocessors.Message{
 		Text:   "/info",
-		UserID: uid,
+		UserId: uid,
 	}, userState)
 
 	assert.NoError(t, err)
@@ -59,7 +59,7 @@ func Test_OnUnknownCommand_ShouldAnswerWithHelpMessage(t *testing.T) {
 
 	_, err := model.IncomingMessage(ctx, msgprocessors.Message{
 		Text:   "some text",
-		UserID: uid,
+		UserId: uid,
 	}, userState)
 
 	assert.NoError(t, err)

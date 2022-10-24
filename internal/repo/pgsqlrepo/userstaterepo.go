@@ -50,12 +50,12 @@ func (r *userStateRepo) Save(ctx context.Context, state *userstates.UserState) e
 	_, err = r.pool.Exec(ctx, `
 		insert into user_states (user_id, currency_code, status, input_buffer) values($1, $2, $3, $4) 
 		on conflict (user_id) do update set currency_code=excluded.currency_code, status=excluded.status, input_buffer=excluded.input_buffer`,
-		state.UserID, state.Currency, state.GetStatus(), jsonBuffer)
+		state.UserId, state.Currency, state.GetStatus(), jsonBuffer)
 	return err
 }
 
-func (r *userStateRepo) Delete(ctx context.Context, UserID int64) error {
-	res, err := r.pool.Exec(ctx, "delete from user_states where user_id=$1", UserID)
+func (r *userStateRepo) Delete(ctx context.Context, userId int64) error {
+	res, err := r.pool.Exec(ctx, "delete from user_states where user_id=$1", userId)
 	if err != nil {
 		return err
 	}

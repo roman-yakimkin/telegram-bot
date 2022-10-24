@@ -23,8 +23,8 @@ func NewExpenseLimitsRepo(service *config.Service) repo.ExpenseLimitsRepo {
 	}
 }
 
-func (r *expenseLimitsRepo) GetOne(_ context.Context, UserID int64, index int) (*expenses.ExpenseLimit, error) {
-	limits, ok := r.limits[UserID]
+func (r *expenseLimitsRepo) GetOne(_ context.Context, userId int64, index int) (*expenses.ExpenseLimit, error) {
+	limits, ok := r.limits[userId]
 	if !ok {
 		return &expenses.ExpenseLimit{
 			Month: index,
@@ -39,10 +39,10 @@ func (r *expenseLimitsRepo) GetOne(_ context.Context, UserID int64, index int) (
 	return &limit, nil
 }
 
-func (r *expenseLimitsRepo) GetAll(ctx context.Context, UserID int64) ([]expenses.ExpenseLimit, error) {
+func (r *expenseLimitsRepo) GetAll(ctx context.Context, userId int64) ([]expenses.ExpenseLimit, error) {
 	result := make([]expenses.ExpenseLimit, 12)
 	for i := 0; i < len(result); i++ {
-		limit, err := r.GetOne(ctx, UserID, i+1)
+		limit, err := r.GetOne(ctx, userId, i+1)
 		if err != nil {
 			return nil, err
 		}
@@ -52,16 +52,16 @@ func (r *expenseLimitsRepo) GetAll(ctx context.Context, UserID int64) ([]expense
 }
 
 func (r *expenseLimitsRepo) Save(_ context.Context, el *expenses.ExpenseLimit) error {
-	_, ok := r.limits[el.UserID]
+	_, ok := r.limits[el.UserId]
 	if !ok {
-		r.limits[el.UserID] = make(ExpenseUserLimits, 12)
+		r.limits[el.UserId] = make(ExpenseUserLimits, 12)
 	}
-	r.limits[el.UserID][el.Month] = *el
+	r.limits[el.UserId][el.Month] = *el
 	return nil
 }
 
-func (r *expenseLimitsRepo) Delete(_ context.Context, UserID int64, index int) error {
-	limits, ok := r.limits[UserID]
+func (r *expenseLimitsRepo) Delete(_ context.Context, userId int64, index int) error {
+	limits, ok := r.limits[userId]
 	if !ok {
 		return localerr.ErrExpenseLimitNotFound
 	}
@@ -70,6 +70,6 @@ func (r *expenseLimitsRepo) Delete(_ context.Context, UserID int64, index int) e
 		return localerr.ErrExpenseLimitNotFound
 	}
 	delete(limits, index)
-	r.limits[UserID] = limits
+	r.limits[userId] = limits
 	return nil
 }

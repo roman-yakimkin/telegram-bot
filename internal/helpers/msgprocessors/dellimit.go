@@ -24,5 +24,5 @@ func (p *deleteLimitMessageProcessor) ShouldProcess(msg Message, _ *userstates.U
 }
 
 func (p *deleteLimitMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedDelLimitMonth, p.tgClient.SendMessage("Введите месяц (1 - 12) или * для отмены", msg.UserID)
+	return userstates.ExpectedDelLimitMonth, p.tgClient.SendMessage("Введите месяц (1 - 12) или * для отмены", msg.UserId)
 }

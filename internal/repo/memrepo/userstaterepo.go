@@ -33,19 +33,19 @@ func (r *userStateRepo) GetOne(_ context.Context, UserId int64) (*userstates.Use
 func (r *userStateRepo) Save(_ context.Context, state *userstates.UserState) error {
 	state.BeforeSave()
 	r.mx.Lock()
-	r.states[state.UserID] = *state
+	r.states[state.UserId] = *state
 	r.mx.Unlock()
 	return nil
 }
 
-func (r *userStateRepo) Delete(_ context.Context, UserID int64) error {
+func (r *userStateRepo) Delete(_ context.Context, userId int64) error {
 	r.mx.Lock()
 	defer r.mx.Unlock()
-	_, ok := r.states[UserID]
+	_, ok := r.states[userId]
 	if !ok {
 		return localerr.ErrUserStateNotFound
 	}
-	delete(r.states, UserID)
+	delete(r.states, userId)
 	return nil
 }
 

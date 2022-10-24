@@ -9,7 +9,7 @@ import (
 )
 
 type UserCurrencyGetter interface {
-	UserCurrencyRate(ctx context.Context, UserID int64, date time.Time) (*currencies.CurrencyRate, error)
+	UserCurrencyRate(ctx context.Context, userId int64, date time.Time) (*currencies.CurrencyRate, error)
 }
 
 type Store interface {
@@ -22,5 +22,5 @@ type Store interface {
 	CurrencyConvertorTo() repo.CurrencyConvertorTo
 	Limit() repo.ExpenseLimitsRepo
 
-	MeetMonthlyLimit(ctx context.Context, UserID int64, date time.Time, amountInRub int, curr repo.CurrencyConvertorTo) (bool, error)
+	MeetMonthlyLimit(ctx context.Context, userId int64, date time.Time, amountInRub int, curr repo.CurrencyConvertorTo) (bool, error)
 }

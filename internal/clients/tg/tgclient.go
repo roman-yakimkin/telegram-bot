@@ -39,8 +39,8 @@ func New(tokenGetter TokenGetter, store store.Store, currConv convertors.Currenc
 	}, nil
 }
 
-func (c *Client) SendMessage(text string, userID int64) error {
-	_, err := c.client.Send(tgbotapi.NewMessage(userID, text))
+func (c *Client) SendMessage(text string, userId int64) error {
+	_, err := c.client.Send(tgbotapi.NewMessage(userId, text))
 	if err != nil {
 		return errors.Wrap(err, "client.Send")
 	}
@@ -105,7 +105,7 @@ func (c *Client) ListenUpdates(ctx context.Context, msgModel *messages.Model) er
 
 			newStatus, err := msgModel.IncomingMessage(ctx, msgprocessors.Message{
 				Text:   text,
-				UserID: uid,
+				UserId: uid,
 			}, userState)
 			if err != nil {
 				log.Println("error processing message:", err)

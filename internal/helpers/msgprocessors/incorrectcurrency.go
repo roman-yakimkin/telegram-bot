@@ -28,5 +28,5 @@ func (p *incorrectCurrencyMessageProcessor) DoProcess(ctx context.Context, msg M
 	if err != nil {
 		return userstates.ExpectedCommand, err
 	}
-	return userstates.ExpectedCurrency, p.tgClient.SendMessage("Валюта задана неверно\n"+currOutput, msg.UserID)
+	return userstates.ExpectedCurrency, p.tgClient.SendMessage("Валюта задана неверно\n"+currOutput, msg.UserId)
 }

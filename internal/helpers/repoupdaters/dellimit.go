@@ -35,7 +35,7 @@ func (s *delLimitSaver) UpdateRepo(ctx context.Context, state *userstates.UserSt
 	if err != nil {
 		return err
 	}
-	return s.limitRepo.Delete(ctx, state.UserID, index)
+	return s.limitRepo.Delete(ctx, state.UserId, index)
 }
 
 func (s *delLimitSaver) ClearData(state *userstates.UserState) {

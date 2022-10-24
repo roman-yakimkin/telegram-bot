@@ -7,12 +7,12 @@ import (
 )
 
 type MessageSender interface {
-	SendMessage(text string, userID int64) error
+	SendMessage(text string, userId int64) error
 }
 
 type Message struct {
 	Text   string
-	UserID int64
+	UserId int64
 }
 
 const InfoText = `/info - текущая справка

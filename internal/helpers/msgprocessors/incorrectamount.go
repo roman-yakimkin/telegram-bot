@@ -24,5 +24,5 @@ func (p *incorrectAmountMessageProcessor) ShouldProcess(_ Message, userState *us
 }
 
 func (p *incorrectAmountMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
-	return userstates.ExpectedAmount, p.tgClient.SendMessage("Сумма платежа задана неверно. Введите сумму платежа. Текущая валюта - "+userState.Currency, msg.UserID)
+	return userstates.ExpectedAmount, p.tgClient.SendMessage("Сумма платежа задана неверно. Введите сумму платежа. Текущая валюта - "+userState.Currency, msg.UserId)
 }

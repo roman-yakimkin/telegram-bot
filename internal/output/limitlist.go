@@ -10,7 +10,7 @@ import (
 )
 
 type LimitListOutput interface {
-	Output(ctx context.Context, UserID int64) (string, error)
+	Output(ctx context.Context, userId int64) (string, error)
 }
 
 type limitListOutput struct {
@@ -25,9 +25,9 @@ func NewLimitListOutput(limitRepo repo.ExpenseLimitsRepo, outputAmount CurrencyA
 	}
 }
 
-func (o *limitListOutput) Output(ctx context.Context, UserID int64) (string, error) {
+func (o *limitListOutput) Output(ctx context.Context, userId int64) (string, error) {
 	var sb strings.Builder
-	limits, err := o.limitRepo.GetAll(ctx, UserID)
+	limits, err := o.limitRepo.GetAll(ctx, userId)
 	if err != nil {
 		return "", err
 	}

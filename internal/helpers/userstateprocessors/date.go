@@ -76,5 +76,5 @@ func (p *DateProcessor) convertAndAddAmount(ctx context.Context, state *userstat
 }
 
 func (p *DateProcessor) checkLimitExceeding(ctx context.Context, state *userstates.UserState, amount int, date time.Time) (bool, error) {
-	return p.store.MeetMonthlyLimit(ctx, state.UserID, utils.TimeTruncate(date), amount, p.currConv)
+	return p.store.MeetMonthlyLimit(ctx, state.UserId, utils.TimeTruncate(date), amount, p.currConv)
 }

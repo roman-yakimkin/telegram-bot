@@ -7,8 +7,8 @@ import (
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/currencies"
 )
 
-func (s *store) UserCurrencyRate(ctx context.Context, UserID int64, date time.Time) (*currencies.CurrencyRate, error) {
-	userInfo, err := s.UserState().GetOne(ctx, UserID)
+func (s *store) UserCurrencyRate(ctx context.Context, userId int64, date time.Time) (*currencies.CurrencyRate, error) {
+	userInfo, err := s.UserState().GetOne(ctx, userId)
 	if err != nil {
 		return nil, err
 	}

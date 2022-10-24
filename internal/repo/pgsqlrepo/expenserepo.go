@@ -39,14 +39,14 @@ func (r *expensesRepo) Add(ctx context.Context, e *expenses.Expense, limitChecke
 		return err
 	}
 	_, err = tx.Exec(ctx, "insert into expenses (user_id, category_id, currency_code, amount, date) values ($1, $2, $3, $4, $5)",
-		e.UserID, catId, e.Currency, e.Amount, utils.TimeTruncate(e.Date))
+		e.UserId, catId, e.Currency, e.Amount, utils.TimeTruncate(e.Date))
 	if err != nil {
 		if rErr := tx.Rollback(ctx); rErr != nil {
 			log.Println("rollback error", rErr)
 		}
 		return err
 	}
-	ok, err := limitChecker.MeetMonthlyLimit(ctx, e.UserID, utils.TimeTruncate(e.Date), e.Amount, limitChecker.CurrencyConvertorTo())
+	ok, err := limitChecker.MeetMonthlyLimit(ctx, e.UserId, utils.TimeTruncate(e.Date), e.Amount, limitChecker.CurrencyConvertorTo())
 	if !ok || err != nil {
 		if !ok {
 			log.Println("monthly limit exceeded")
@@ -76,12 +76,12 @@ func (r *expensesRepo) getCategoryId(ctx context.Context, tx pgx.Tx, catName str
 	return id, err
 }
 
-func (r *expensesRepo) ExpensesByUserAndTimeInterval(ctx context.Context, UserID int64, timeStart time.Time, timeEnd time.Time) (repo.ExpData, error) {
+func (r *expensesRepo) ExpensesByUserAndTimeInterval(ctx context.Context, userId int64, timeStart time.Time, timeEnd time.Time) (repo.ExpData, error) {
 	result := make(repo.ExpData)
 	rows, err := r.pool.Query(ctx, `
 			select c.name as category_name, e.currency_code, e.amount, e.date 
 			from expenses e inner join categories c on c.id = e.category_id
-			where e.user_id = $1 and e.date between $2 and $3`, UserID, utils.TimeTruncate(timeStart), utils.TimeTruncate(timeEnd))
+			where e.user_id = $1 and e.date between $2 and $3`, userId, utils.TimeTruncate(timeStart), utils.TimeTruncate(timeEnd))
 	if err != nil {
 		return nil, err
 	}

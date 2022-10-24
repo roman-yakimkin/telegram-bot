@@ -62,5 +62,5 @@ func (s *Model) IncomingMessage(ctx context.Context, msg msgprocessors.Message, 
 			return proc.DoProcess(ctx, msg, userState)
 		}
 	}
-	return userstates.ExpectedCommand, s.tgClient.SendMessage("не знаю эту команду", msg.UserID)
+	return userstates.ExpectedCommand, s.tgClient.SendMessage("не знаю эту команду", msg.UserId)
 }

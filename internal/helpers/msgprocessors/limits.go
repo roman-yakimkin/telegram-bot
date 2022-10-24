@@ -25,10 +25,10 @@ func (p *limitsMessageProcessor) ShouldProcess(msg Message, _ *userstates.UserSt
 }
 
 func (p *limitsMessageProcessor) DoProcess(ctx context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	limits, err := p.output.Limits().Output(ctx, msg.UserID)
+	limits, err := p.output.Limits().Output(ctx, msg.UserId)
 	if err != nil {
 		limits = "Ошибка при выводе лимитов"
 		log.Println("limit output error", err)
 	}
-	return userstates.ExpectedCommand, p.tgClient.SendMessage(limits, msg.UserID)
+	return userstates.ExpectedCommand, p.tgClient.SendMessage(limits, msg.UserId)
 }

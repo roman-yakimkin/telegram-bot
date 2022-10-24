@@ -39,24 +39,24 @@ const (
 )
 
 type UserState struct {
-	UserID      int64
+	UserId      int64
 	Currency    string
 	status      int
 	inputBuffer map[string]interface{}
 }
 
-func NewUserState(UserID int64) *UserState {
+func NewUserState(UserId int64) *UserState {
 	return &UserState{
-		UserID:      UserID,
+		UserId:      UserId,
 		Currency:    "RUB",
 		status:      ExpectedCommand,
 		inputBuffer: make(map[string]interface{}),
 	}
 }
 
-func CreateUserState(UserID int64, Currency string, status int, inputBuffer map[string]interface{}) *UserState {
+func CreateUserState(userId int64, Currency string, status int, inputBuffer map[string]interface{}) *UserState {
 	return &UserState{
-		UserID:      UserID,
+		UserId:      userId,
 		Currency:    Currency,
 		status:      status,
 		inputBuffer: inputBuffer,

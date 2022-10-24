@@ -24,5 +24,5 @@ func (p *incorrectSetLimitMonthMessageProcessor) ShouldProcess(_ Message, userSt
 }
 
 func (p *incorrectSetLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedSetLimitMonth, p.tgClient.SendMessage("Месяц задан неверно. Введите месяц (1 - 12)", msg.UserID)
+	return userstates.ExpectedSetLimitMonth, p.tgClient.SendMessage("Месяц задан неверно. Введите месяц (1 - 12)", msg.UserId)
 }

@@ -29,16 +29,16 @@ func (p *reportMessageProcessor) DoProcess(ctx context.Context, msg Message, _ *
 	var err error
 	switch msg.Text {
 	case "/lastweek":
-		report, err = p.output.Reports().LastWeek(ctx, msg.UserID)
+		report, err = p.output.Reports().LastWeek(ctx, msg.UserId)
 	case "/lastmonth":
-		report, err = p.output.Reports().LastMonth(ctx, msg.UserID)
+		report, err = p.output.Reports().LastMonth(ctx, msg.UserId)
 	case "/lastyear":
-		report, err = p.output.Reports().LastYear(ctx, msg.UserID)
+		report, err = p.output.Reports().LastYear(ctx, msg.UserId)
 	}
 	if err != nil {
 		log.Println("creating report error: ", err)
 		report = "Ошибка при создании отчета"
 	}
 
-	return userstates.ExpectedCommand, p.tgClient.SendMessage(report, msg.UserID)
+	return userstates.ExpectedCommand, p.tgClient.SendMessage(report, msg.UserId)
 }

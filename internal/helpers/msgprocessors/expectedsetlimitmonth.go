@@ -24,5 +24,5 @@ func (p *expectedSetLimitMonthMessageProcessor) ShouldProcess(_ Message, userSta
 }
 
 func (p *expectedSetLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
-	return userstates.ExpectedSetLimitAmount, p.tgClient.SendMessage("Введите сумму лимита. Текущая валюта - "+userState.Currency, msg.UserID)
+	return userstates.ExpectedSetLimitAmount, p.tgClient.SendMessage("Введите сумму лимита. Текущая валюта - "+userState.Currency, msg.UserId)
 }

@@ -31,7 +31,7 @@ func (s *saveLimitSaver) toLimit(state *userstates.UserState) (*expenses.Expense
 		return nil, err
 	}
 	return &expenses.ExpenseLimit{
-		UserID: state.UserID,
+		UserId: state.UserId,
 		Month:  month,
 		Value:  value,
 	}, nil

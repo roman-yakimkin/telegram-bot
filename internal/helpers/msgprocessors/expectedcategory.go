@@ -24,5 +24,5 @@ func (p *expectedCategoryMessageProcessor) ShouldProcess(_ Message, userState *u
 }
 
 func (p *expectedCategoryMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
-	return userstates.ExpectedAmount, p.tgClient.SendMessage("Введите сумму платежа. Текущая валюта - "+userState.Currency, msg.UserID)
+	return userstates.ExpectedAmount, p.tgClient.SendMessage("Введите сумму платежа. Текущая валюта - "+userState.Currency, msg.UserId)
 }

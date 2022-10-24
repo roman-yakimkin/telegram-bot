@@ -24,5 +24,5 @@ func (p *expectedCurrencyMessageProcessor) ShouldProcess(_ Message, userState *u
 }
 
 func (p *expectedCurrencyMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedCommand, p.tgClient.SendMessage("Валюта изменена", msg.UserID)
+	return userstates.ExpectedCommand, p.tgClient.SendMessage("Валюта изменена", msg.UserId)
 }

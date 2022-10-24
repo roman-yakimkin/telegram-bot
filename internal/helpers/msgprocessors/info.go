@@ -24,5 +24,5 @@ func (p *infoMessageProcessor) ShouldProcess(msg Message, _ *userstates.UserStat
 }
 
 func (p *infoMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedCommand, p.tgClient.SendMessage(InfoText, msg.UserID)
+	return userstates.ExpectedCommand, p.tgClient.SendMessage(InfoText, msg.UserId)
 }

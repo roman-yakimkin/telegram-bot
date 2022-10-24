@@ -13,15 +13,15 @@ import (
 )
 
 type ReportManagerLastWeek interface {
-	LastWeek(ctx context.Context, UserID int64) (string, error)
+	LastWeek(ctx context.Context, userId int64) (string, error)
 }
 
 type ReportManagerLastMonth interface {
-	LastMonth(ctx context.Context, UserID int64) (string, error)
+	LastMonth(ctx context.Context, userId int64) (string, error)
 }
 
 type ReportManagerLastYear interface {
-	LastYear(ctx context.Context, UserID int64) (string, error)
+	LastYear(ctx context.Context, userId int64) (string, error)
 }
 
 type ReportManager interface {
@@ -71,39 +71,39 @@ func (rm *reportManager) makeTextReport(ctx context.Context, userID int64, expDa
 	return sb.String(), nil
 }
 
-func (rm *reportManager) LastWeek(ctx context.Context, UserID int64) (string, error) {
+func (rm *reportManager) LastWeek(ctx context.Context, userId int64) (string, error) {
 	timeStart := time.Now().AddDate(0, 0, -7)
 	timeEnd := time.Now()
-	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, UserID, timeStart, timeEnd)
+	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, userId, timeStart, timeEnd)
 	if err != nil {
 		log.Println("getting report data error:", err)
 		return "Ошибка при получении данных", err
 	}
-	result, err := rm.makeTextReport(ctx, UserID, expData)
+	result, err := rm.makeTextReport(ctx, userId, expData)
 	if err != nil {
 		return "", err
 	}
 	return result, nil
 }
 
-func (rm *reportManager) LastMonth(ctx context.Context, UserID int64) (string, error) {
+func (rm *reportManager) LastMonth(ctx context.Context, userId int64) (string, error) {
 	timeStart := time.Now().AddDate(0, -1, 0)
 	timeEnd := time.Now()
-	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, UserID, timeStart, timeEnd)
+	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, userId, timeStart, timeEnd)
 	if err != nil {
 		log.Println("getting report data error:", err)
 		return "Ошибка при получении данных", err
 	}
-	return rm.makeTextReport(ctx, UserID, expData)
+	return rm.makeTextReport(ctx, userId, expData)
 }
 
-func (rm *reportManager) LastYear(ctx context.Context, UserID int64) (string, error) {
+func (rm *reportManager) LastYear(ctx context.Context, userId int64) (string, error) {
 	timeStart := time.Now().AddDate(-1, 0, 0)
 	timeEnd := time.Now()
-	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, UserID, timeStart, timeEnd)
+	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, userId, timeStart, timeEnd)
 	if err != nil {
 		log.Println("getting report data error:", err)
 		return "Ошибка при получении данных", err
 	}
-	return rm.makeTextReport(ctx, UserID, expData)
+	return rm.makeTextReport(ctx, userId, expData)
 }

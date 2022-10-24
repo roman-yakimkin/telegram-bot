@@ -28,17 +28,17 @@ type CurrencyConvertor interface {
 
 type ExpenseLimitChecker interface {
 	CurrencyConvertorTo() CurrencyConvertorTo
-	MeetMonthlyLimit(ctx context.Context, UserID int64, date time.Time, amountInRub int, curr CurrencyConvertorTo) (bool, error)
+	MeetMonthlyLimit(ctx context.Context, userId int64, date time.Time, amountInRub int, curr CurrencyConvertorTo) (bool, error)
 }
 
 type ExpensesRepo interface {
 	Add(ctx context.Context, e *expenses.Expense, limitChecker ExpenseLimitChecker) error
-	ExpensesByUserAndTimeInterval(ctx context.Context, UserID int64, timeStart time.Time, timeEnd time.Time) (ExpData, error)
+	ExpensesByUserAndTimeInterval(ctx context.Context, userId int64, timeStart time.Time, timeEnd time.Time) (ExpData, error)
 }
 
 type ExpenseLimitsRepo interface {
-	GetOne(ctx context.Context, UserID int64, index int) (*expenses.ExpenseLimit, error)
-	GetAll(ctx context.Context, UserID int64) ([]expenses.ExpenseLimit, error)
+	GetOne(ctx context.Context, userId int64, index int) (*expenses.ExpenseLimit, error)
+	GetAll(ctx context.Context, userId int64) ([]expenses.ExpenseLimit, error)
 	Save(ctx context.Context, e *expenses.ExpenseLimit) error
-	Delete(ctx context.Context, UserID int64, index int) error
+	Delete(ctx context.Context, userId int64, index int) error
 }

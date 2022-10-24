@@ -29,7 +29,7 @@ func (s *expenseSaver) toExpense(state *userstates.UserState) (*expenses.Expense
 		return nil, err
 	}
 	return &expenses.Expense{
-		UserID:   state.UserID,
+		UserId:   state.UserId,
 		Category: state.GetBufferValue(userstates.AddExpenseCategoryValue).(string),
 		Amount:   amount,
 		Currency: state.Currency,

@@ -28,5 +28,5 @@ func (p *setCurrencyMessageProcessor) DoProcess(ctx context.Context, msg Message
 	if err != nil {
 		return userstates.ExpectedCommand, err
 	}
-	return userstates.ExpectedCurrency, p.tgClient.SendMessage(currOutput, msg.UserID)
+	return userstates.ExpectedCurrency, p.tgClient.SendMessage(currOutput, msg.UserId)
 }
