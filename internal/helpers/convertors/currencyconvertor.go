@@ -1,6 +1,7 @@
 package convertors
 
 import (
+	"context"
 	"time"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/config"
@@ -19,24 +20,24 @@ func NewCurrencyConvertor(currencyRepo repo.CurrencyRateRepo, cfg *config.Servic
 	}
 }
 
-func (c *currencyConvertor) getRateToMain(currName string, date time.Time) (float64, error) {
-	currency, err := c.currencyRepo.GetOneByDate(currName, date)
+func (c *currencyConvertor) getRateToMain(ctx context.Context, currName string, date time.Time) (float64, error) {
+	currency, err := c.currencyRepo.GetOneByDate(ctx, currName, date)
 	if err != nil {
 		return 0, err
 	}
 	return currency.RateToMain, nil
 }
 
-func (c *currencyConvertor) From(amount int, currFrom string, date time.Time) (int, error) {
-	rate, err := c.getRateToMain(currFrom, date)
+func (c *currencyConvertor) From(ctx context.Context, amount int, currFrom string, date time.Time) (int, error) {
+	rate, err := c.getRateToMain(ctx, currFrom, date)
 	if err != nil {
 		return 0, err
 	}
 	return int(float64(amount) * rate), nil
 }
 
-func (c *currencyConvertor) To(amount int, currFrom string, date time.Time) (int, error) {
-	rate, err := c.getRateToMain(currFrom, date)
+func (c *currencyConvertor) To(ctx context.Context, amount int, currFrom string, date time.Time) (int, error) {
+	rate, err := c.getRateToMain(ctx, currFrom, date)
 	if err != nil {
 		return 0, err
 	}

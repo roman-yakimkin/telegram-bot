@@ -1,10 +1,13 @@
 package userstateprocessors
 
-import "gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+import (
+	"context"
+
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+)
 
 type CategoryProcessor struct {
 	processStatus int
-	userState     *userstates.UserState
 }
 
 func NewCategoryProcessor() UserStateProcessor {
@@ -13,14 +16,10 @@ func NewCategoryProcessor() UserStateProcessor {
 	}
 }
 
-func (p *CategoryProcessor) SetUserState(userState *userstates.UserState) {
-	p.userState = userState
-}
-
 func (p *CategoryProcessor) GetProcessStatus() int {
 	return p.processStatus
 }
 
-func (p *CategoryProcessor) DoProcess(msgText string) {
-	p.userState.SetCategory(msgText)
+func (p *CategoryProcessor) DoProcess(_ context.Context, state *userstates.UserState, msgText string) {
+	state.SetBufferValue(userstates.AddExpenseCategoryValue, msgText)
 }

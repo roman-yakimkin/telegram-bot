@@ -1,6 +1,7 @@
 package memrepo
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -54,7 +55,7 @@ func (r *сurrencyRateRepo) isRateUnset(resp *http.Response) bool {
 	return err == nil && strings.Contains(rawData.Explanation, cfg.CurrencyRateUnset)
 }
 
-func (r *сurrencyRateRepo) LoadByDate(date time.Time) error {
+func (r *сurrencyRateRepo) LoadByDate(_ context.Context, date time.Time) error {
 	cfg := r.service.GetConfig()
 	resp, err := http.Get(r.currencyURL(date))
 	if err != nil {
@@ -98,26 +99,26 @@ func (r *сurrencyRateRepo) LoadByDate(date time.Time) error {
 	return nil
 }
 
-func (r *сurrencyRateRepo) LoadByDateIfEmpty(date time.Time) error {
-	has, err := r.HasRatesByDate(date)
+func (r *сurrencyRateRepo) LoadByDateIfEmpty(ctx context.Context, date time.Time) error {
+	has, err := r.HasRatesByDate(ctx, date)
 	if err != nil {
 		return err
 	}
 	if !has {
-		err := r.LoadByDate(date)
+		err := r.LoadByDate(ctx, date)
 		if err == localerr.ErrCurrencyRateUnset {
-			return r.LoadByDateIfEmpty(date.AddDate(0, 0, -1))
+			return r.LoadByDateIfEmpty(ctx, date.AddDate(0, 0, -1))
 		}
 	}
 	return nil
 }
 
-func (r *сurrencyRateRepo) GetOneByDate(currName string, date time.Time) (*currencies.CurrencyRate, error) {
+func (r *сurrencyRateRepo) GetOneByDate(ctx context.Context, currName string, date time.Time) (*currencies.CurrencyRate, error) {
 	r.mx.Lock()
 	currenciesByDate, ok := r.c[date]
 	r.mx.Unlock()
 	if !ok {
-		err := r.LoadByDateIfEmpty(date)
+		err := r.LoadByDateIfEmpty(ctx, date)
 		if err != nil {
 			return nil, err
 		}
@@ -130,17 +131,17 @@ func (r *сurrencyRateRepo) GetOneByDate(currName string, date time.Time) (*curr
 	return &currency, nil
 }
 
-func (r *сurrencyRateRepo) HasRatesByDate(date time.Time) (bool, error) {
+func (r *сurrencyRateRepo) HasRatesByDate(_ context.Context, date time.Time) (bool, error) {
 	_, ok := r.c[date]
 	return ok, nil
 }
 
-func (r *сurrencyRateRepo) GetAllByDate(date time.Time) ([]currencies.CurrencyRate, error) {
+func (r *сurrencyRateRepo) GetAllByDate(ctx context.Context, date time.Time) ([]currencies.CurrencyRate, error) {
 	r.mx.Lock()
 	currenciesByDate, ok := r.c[date]
 	r.mx.Unlock()
 	if !ok {
-		err := r.LoadByDate(date)
+		err := r.LoadByDate(ctx, date)
 		if err != nil {
 			return nil, err
 		}
@@ -151,11 +152,11 @@ func (r *сurrencyRateRepo) GetAllByDate(date time.Time) ([]currencies.CurrencyR
 	return r.dateMapToSlice(currenciesByDate), nil
 }
 
-func (r *сurrencyRateRepo) GetAll() ([]currencies.CurrencyRate, error) {
+func (r *сurrencyRateRepo) GetAll(ctx context.Context) ([]currencies.CurrencyRate, error) {
 	var result []currencies.CurrencyRate
 
 	for date := range r.c {
-		currDateSlice, err := r.GetAllByDate(date)
+		currDateSlice, err := r.GetAllByDate(ctx, date)
 		if err != nil {
 			return nil, err
 		}

@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"context"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -11,6 +12,7 @@ import (
 )
 
 func Test_OnStartCommand_ShouldAnswerWithIntroMessage(t *testing.T) {
+	ctx := context.TODO()
 	ctrl := gomock.NewController(t)
 	sender := mockmessages.NewMockMessageSender(ctrl)
 	model := New(sender, nil)
@@ -19,15 +21,16 @@ func Test_OnStartCommand_ShouldAnswerWithIntroMessage(t *testing.T) {
 
 	sender.EXPECT().SendMessage("hello\n"+msgprocessors.InfoText, uid)
 
-	_, err := model.IncomingMessage(msgprocessors.Message{
+	_, err := model.IncomingMessage(ctx, msgprocessors.Message{
 		Text:   "/start",
-		UserID: uid,
+		UserId: uid,
 	}, userState)
 
 	assert.NoError(t, err)
 }
 
 func Test_OnInfoCommand_ShouldAnswerWithInfoMessage(t *testing.T) {
+	ctx := context.TODO()
 	ctrl := gomock.NewController(t)
 	sender := mockmessages.NewMockMessageSender(ctrl)
 	model := New(sender, nil)
@@ -36,15 +39,16 @@ func Test_OnInfoCommand_ShouldAnswerWithInfoMessage(t *testing.T) {
 
 	sender.EXPECT().SendMessage(msgprocessors.InfoText, uid)
 
-	_, err := model.IncomingMessage(msgprocessors.Message{
+	_, err := model.IncomingMessage(ctx, msgprocessors.Message{
 		Text:   "/info",
-		UserID: uid,
+		UserId: uid,
 	}, userState)
 
 	assert.NoError(t, err)
 }
 
 func Test_OnUnknownCommand_ShouldAnswerWithHelpMessage(t *testing.T) {
+	ctx := context.TODO()
 	ctrl := gomock.NewController(t)
 
 	sender := mockmessages.NewMockMessageSender(ctrl)
@@ -53,9 +57,9 @@ func Test_OnUnknownCommand_ShouldAnswerWithHelpMessage(t *testing.T) {
 	var uid int64 = 123
 	userState := userstates.NewUserState(uid)
 
-	_, err := model.IncomingMessage(msgprocessors.Message{
+	_, err := model.IncomingMessage(ctx, msgprocessors.Message{
 		Text:   "some text",
-		UserID: uid,
+		UserId: uid,
 	}, userState)
 
 	assert.NoError(t, err)

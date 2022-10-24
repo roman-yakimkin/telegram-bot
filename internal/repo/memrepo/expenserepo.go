@@ -1,6 +1,7 @@
 package memrepo
 
 import (
+	"context"
 	"sync"
 	"time"
 
@@ -28,30 +29,30 @@ func NewExpenseRepo() repo.ExpensesRepo {
 	}
 }
 
-func (r *expensesRepo) Add(e *expenses.Expense) error {
+func (r *expensesRepo) Add(_ context.Context, e *expenses.Expense, _ repo.ExpenseLimitChecker) error {
 	r.mx.Lock()
 	defer r.mx.Unlock()
-	_, ok := r.e[e.UserID]
+	_, ok := r.e[e.UserId]
 	if !ok {
-		r.e[e.UserID] = make(ExpensesUserCat)
+		r.e[e.UserId] = make(ExpensesUserCat)
 	}
-	payments := r.e[e.UserID][e.Category]
+	payments := r.e[e.UserId][e.Category]
 	payments = append(payments, ExpensesUserCatPayment{
 		amount:   e.Amount,
 		currency: e.Currency,
 		date:     utils.TimeTruncate(e.Date),
 	})
-	r.e[e.UserID][e.Category] = payments
+	r.e[e.UserId][e.Category] = payments
 	return nil
 }
 
-func (r *expensesRepo) ExpensesByUserAndTimeInterval(UserID int64, timeStart time.Time, timeEnd time.Time) repo.ExpData {
+func (r *expensesRepo) ExpensesByUserAndTimeInterval(_ context.Context, userId int64, timeStart time.Time, timeEnd time.Time) (repo.ExpData, error) {
 	r.mx.Lock()
 	defer r.mx.Unlock()
 	result := make(repo.ExpData)
-	userData, ok := r.e[UserID]
+	userData, ok := r.e[userId]
 	if !ok {
-		return result
+		return result, nil
 	}
 	for category, payments := range userData {
 		sums := make(repo.ExpCurrencyData)
@@ -69,5 +70,5 @@ func (r *expensesRepo) ExpensesByUserAndTimeInterval(UserID int64, timeStart tim
 			result[category] = sums
 		}
 	}
-	return result
+	return result, nil
 }

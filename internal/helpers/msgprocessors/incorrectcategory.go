@@ -1,6 +1,8 @@
 package msgprocessors
 
 import (
+	"context"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/output"
 )
@@ -21,6 +23,6 @@ func (p *incorrectCategoryMessageProcessor) ShouldProcess(_ Message, userState *
 	return userState.GetStatus() == userstates.IncorrectCategory
 }
 
-func (p *incorrectCategoryMessageProcessor) DoProcess(msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedCategory, p.tgClient.SendMessage("Категория задана неверно. Введите категорию платежа", msg.UserID)
+func (p *incorrectCategoryMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
+	return userstates.ExpectedCategory, p.tgClient.SendMessage("Категория задана неверно. Введите категорию платежа", msg.UserId)
 }

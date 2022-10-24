@@ -1,19 +1,26 @@
 package msgprocessors
 
-import "gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+import (
+	"context"
+
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+)
 
 type MessageSender interface {
-	SendMessage(text string, userID int64) error
+	SendMessage(text string, userId int64) error
 }
 
 type Message struct {
 	Text   string
-	UserID int64
+	UserId int64
 }
 
 const InfoText = `/info - текущая справка
 /getcurrency - получение текущей валюты
 /setcurrency - установка текущей валюты
+/setlimit - установить лимит за месяц
+/dellimit - удалить лимит за месяц
+/limits - получение лимитов по месяцам
 /newexpense - добавление новой траты
 /lastweek - траты за последнюю неделю
 /lastmonth - траты за последний месяц
@@ -21,5 +28,5 @@ const InfoText = `/info - текущая справка
 
 type MessageProcessor interface {
 	ShouldProcess(msg Message, userState *userstates.UserState) bool
-	DoProcess(msg Message, userState *userstates.UserState) (int, error)
+	DoProcess(ctx context.Context, msg Message, userState *userstates.UserState) (int, error)
 }

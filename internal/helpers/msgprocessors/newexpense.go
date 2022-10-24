@@ -1,6 +1,8 @@
 package msgprocessors
 
 import (
+	"context"
+
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/output"
 )
@@ -21,6 +23,6 @@ func (p *newExpenseMessageProcessor) ShouldProcess(msg Message, _ *userstates.Us
 	return msg.Text == "/newexpense"
 }
 
-func (p *newExpenseMessageProcessor) DoProcess(msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedCategory, p.tgClient.SendMessage("Введите категорию платежа", msg.UserID)
+func (p *newExpenseMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
+	return userstates.ExpectedCategory, p.tgClient.SendMessage("Введите категорию платежа", msg.UserId)
 }

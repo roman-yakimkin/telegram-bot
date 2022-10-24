@@ -9,3 +9,7 @@ var ErrCannotGetCurrencyRates = errors.New("cannot get currency rates")
 var ErrCurrencyRateUnset = errors.New("currency rate is absent")
 
 var ErrIncorrectAmountValue = errors.New("incorrect amount value")
+
+var ErrExpenseLimitNotFound = errors.New("expense limit not found")
+
+var ErrNotNumericValue = errors.New("not numeric value")
