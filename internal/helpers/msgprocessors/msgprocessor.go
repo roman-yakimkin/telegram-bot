@@ -28,5 +28,5 @@ const InfoText = `/info - текущая справка
 
 type MessageProcessor interface {
 	ShouldProcess(msg Message, userState *userstates.UserState) bool
-	DoProcess(ctx context.Context, msg Message, userState *userstates.UserState) (int, error)
+	DoProcess(ctx context.Context, msg Message, userState *userstates.UserState) (int, string, error)
 }

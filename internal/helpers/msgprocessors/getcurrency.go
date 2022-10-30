@@ -23,6 +23,6 @@ func (p *getCurrencyMessageProcessor) ShouldProcess(msg Message, _ *userstates.U
 	return msg.Text == "/getcurrency"
 }
 
-func (p *getCurrencyMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
-	return userstates.ExpectedCommand, p.tgClient.SendMessage("Ваша текущая валюта - "+userState.Currency, msg.UserId)
+func (p *getCurrencyMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedCommand, "getcurrency", p.tgClient.SendMessage("Ваша текущая валюта - "+userState.Currency, msg.UserId)
 }

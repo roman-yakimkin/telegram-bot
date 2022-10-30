@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/utils"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
@@ -39,6 +40,9 @@ func (s *store) amountPerYearMonth(ctx context.Context, userId int64, year int, 
 }
 
 func (s *store) MeetMonthlyLimit(ctx context.Context, userId int64, date time.Time, amountInRub int, conv repo.CurrencyConvertorTo) (bool, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "check monthly limit")
+	defer span.Finish()
+
 	y, m, _ := date.Date()
 	amountAdded, err := s.amountPerYearMonth(ctx, userId, y, int(m), "RUB", conv)
 	if err != nil {

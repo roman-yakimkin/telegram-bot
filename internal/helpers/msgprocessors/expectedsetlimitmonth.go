@@ -23,6 +23,6 @@ func (p *expectedSetLimitMonthMessageProcessor) ShouldProcess(_ Message, userSta
 	return userState.GetStatus() == userstates.ExpectedSetLimitMonth
 }
 
-func (p *expectedSetLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
-	return userstates.ExpectedSetLimitAmount, p.tgClient.SendMessage("Введите сумму лимита. Текущая валюта - "+userState.Currency, msg.UserId)
+func (p *expectedSetLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedSetLimitAmount, "setlimit_month", p.tgClient.SendMessage("Введите сумму лимита. Текущая валюта - "+userState.Currency, msg.UserId)
 }

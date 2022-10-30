@@ -3,13 +3,13 @@ package output
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/store"
+	"go.uber.org/zap"
 )
 
 type ReportManagerLastWeek interface {
@@ -34,13 +34,15 @@ type reportManager struct {
 	store      store.Store
 	conv       convertors.CurrencyConvertorTo
 	currAmount CurrencyAmount
+	logger     *zap.Logger
 }
 
-func NewReportManager(store store.Store, conv convertors.CurrencyConvertorTo, currAmount CurrencyAmount) ReportManager {
+func NewReportManager(store store.Store, conv convertors.CurrencyConvertorTo, currAmount CurrencyAmount, logger *zap.Logger) ReportManager {
 	return &reportManager{
 		store:      store,
 		conv:       conv,
 		currAmount: currAmount,
+		logger:     logger,
 	}
 }
 
@@ -76,7 +78,7 @@ func (rm *reportManager) LastWeek(ctx context.Context, userId int64) (string, er
 	timeEnd := time.Now()
 	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, userId, timeStart, timeEnd)
 	if err != nil {
-		log.Println("getting report data error:", err)
+		rm.logger.Error("getting report data error:", zap.Error(err))
 		return "Ошибка при получении данных", err
 	}
 	result, err := rm.makeTextReport(ctx, userId, expData)
@@ -91,7 +93,7 @@ func (rm *reportManager) LastMonth(ctx context.Context, userId int64) (string, e
 	timeEnd := time.Now()
 	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, userId, timeStart, timeEnd)
 	if err != nil {
-		log.Println("getting report data error:", err)
+		rm.logger.Error("getting report data error:", zap.Error(err))
 		return "Ошибка при получении данных", err
 	}
 	return rm.makeTextReport(ctx, userId, expData)
@@ -102,7 +104,7 @@ func (rm *reportManager) LastYear(ctx context.Context, userId int64) (string, er
 	timeEnd := time.Now()
 	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, userId, timeStart, timeEnd)
 	if err != nil {
-		log.Println("getting report data error:", err)
+		rm.logger.Error("getting report data error:", zap.Error(err))
 		return "Ошибка при получении данных", err
 	}
 	return rm.makeTextReport(ctx, userId, expData)

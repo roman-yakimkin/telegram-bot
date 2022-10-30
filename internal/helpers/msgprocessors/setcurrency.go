@@ -23,10 +23,10 @@ func (p *setCurrencyMessageProcessor) ShouldProcess(msg Message, _ *userstates.U
 	return msg.Text == "/setcurrency"
 }
 
-func (p *setCurrencyMessageProcessor) DoProcess(ctx context.Context, msg Message, _ *userstates.UserState) (int, error) {
+func (p *setCurrencyMessageProcessor) DoProcess(ctx context.Context, msg Message, _ *userstates.UserState) (int, string, error) {
 	currOutput, err := p.output.Currency().Output(ctx)
 	if err != nil {
-		return userstates.ExpectedCommand, err
+		return userstates.ExpectedCommand, "setcurrency", err
 	}
-	return userstates.ExpectedCurrency, p.tgClient.SendMessage(currOutput, msg.UserId)
+	return userstates.ExpectedCurrency, "setcurrency", p.tgClient.SendMessage(currOutput, msg.UserId)
 }

@@ -2,22 +2,23 @@ package userstateprocessors
 
 import (
 	"context"
-	"log"
 	"regexp"
 	"time"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/utils"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
+	"go.uber.org/zap"
 )
 
 type setLimitAmountProcessor struct {
 	processStatus int
 	amountRegExp  *regexp.Regexp
 	currConv      convertors.CurrencyConvertorFrom
+	logger        *zap.Logger
 }
 
-func NewSetLimitAmountProcessor(currConv convertors.CurrencyConvertorFrom) (UserStateProcessor, error) {
+func NewSetLimitAmountProcessor(currConv convertors.CurrencyConvertorFrom, logger *zap.Logger) (UserStateProcessor, error) {
 	amountRegExp, err := regexp.Compile(AmountRegex)
 	if err != nil {
 		return nil, err
@@ -26,6 +27,7 @@ func NewSetLimitAmountProcessor(currConv convertors.CurrencyConvertorFrom) (User
 		processStatus: userstates.ExpectedSetLimitAmount,
 		amountRegExp:  amountRegExp,
 		currConv:      currConv,
+		logger:        logger,
 	}, nil
 }
 
@@ -41,7 +43,7 @@ func (p *setLimitAmountProcessor) DoProcess(ctx context.Context, state *userstat
 	}
 	amount := amountInt*100 + amountFrac
 	if err = p.convertAndAddAmount(ctx, state, amount); err != nil {
-		log.Println("error on currency converting:", err)
+		p.logger.Error("error on currency converting:", zap.Error(err))
 		state.SetStatus(userstates.ExpectedCommand)
 		return
 	}

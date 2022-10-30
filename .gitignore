@@ -2,3 +2,6 @@
 /.idea
 /data
 /.database
+/logs/data
+/metrics/data
+/tracing/data

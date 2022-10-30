@@ -23,6 +23,6 @@ func (p *expectedDelLimitMonthMessageProcessor) ShouldProcess(_ Message, userSta
 	return userState.GetStatus() == userstates.ExpectedDelLimitMonth
 }
 
-func (p *expectedDelLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedCommand, p.tgClient.SendMessage("Лимит удален до состояния по умолчанию", msg.UserId)
+func (p *expectedDelLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedCommand, "dellimit_month", p.tgClient.SendMessage("Лимит удален до состояния по умолчанию", msg.UserId)
 }

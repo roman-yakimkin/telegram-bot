@@ -2,30 +2,33 @@ package repoupdaters
 
 import (
 	"context"
-	"log"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
+	"go.uber.org/zap"
 )
 
 type expenseSaver struct {
 	expRepo      repo.ExpensesRepo
 	limitChecker repo.ExpenseLimitChecker
+	logger       *zap.Logger
 }
 
-func NewExpenseSaver(expRepo repo.ExpensesRepo, limitChecker repo.ExpenseLimitChecker) UserStateRepoUpdater {
+func NewExpenseSaver(expRepo repo.ExpensesRepo, limitChecker repo.ExpenseLimitChecker, logger *zap.Logger) UserStateRepoUpdater {
 	return &expenseSaver{
 		expRepo:      expRepo,
 		limitChecker: limitChecker,
+		logger:       logger,
 	}
 }
 
 func (s *expenseSaver) toExpense(state *userstates.UserState) (*expenses.Expense, error) {
 	amount, err := state.IfFloatTransformToInt(userstates.AddExpenseAmountValue)
 	if err != nil {
-		log.Println("error upon getting expense amount value", err)
+		s.logger.Error("error upon getting expense amount value", zap.Error(err))
 		return nil, err
 	}
 	return &expenses.Expense{
@@ -45,6 +48,9 @@ func (s *expenseSaver) ReadyToUpdate(state *userstates.UserState) bool {
 }
 
 func (s *expenseSaver) UpdateRepo(ctx context.Context, state *userstates.UserState) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "save expense")
+	defer span.Finish()
+
 	expense, err := s.toExpense(state)
 	if err != nil {
 		return err

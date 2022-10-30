@@ -5,6 +5,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/config"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
@@ -33,6 +34,9 @@ func (r *expenseLimitsRepo) getDefaultLimit(userId int64, index int) *expenses.E
 }
 
 func (r *expenseLimitsRepo) GetOne(ctx context.Context, userId int64, index int) (*expenses.ExpenseLimit, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "get expense limit from database")
+	defer span.Finish()
+
 	var limit expenses.ExpenseLimit
 	err := r.pool.QueryRow(ctx, "select user_id, month, value from expense_limits where user_id = $1 and month = $2", userId, index).
 		Scan(&limit.UserId, &limit.Month, &limit.Value)
@@ -46,6 +50,9 @@ func (r *expenseLimitsRepo) GetOne(ctx context.Context, userId int64, index int)
 }
 
 func (r *expenseLimitsRepo) GetAll(ctx context.Context, userId int64) ([]expenses.ExpenseLimit, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "get all expense limits from database")
+	defer span.Finish()
+
 	result := make([]expenses.ExpenseLimit, 12)
 	rows, err := r.pool.Query(ctx, "select user_id, month, value from expense_limits where user_id = $1", userId)
 	if err != nil {
@@ -73,6 +80,9 @@ func (r *expenseLimitsRepo) GetAll(ctx context.Context, userId int64) ([]expense
 }
 
 func (r *expenseLimitsRepo) Save(ctx context.Context, el *expenses.ExpenseLimit) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "save user limit to database")
+	defer span.Finish()
+
 	_, err := r.pool.Exec(ctx, `
 		insert into expense_limits(user_id, month, value) values($1, $2, $3)
 		on conflict (user_id, month) do update set value=excluded.value`,
@@ -81,6 +91,9 @@ func (r *expenseLimitsRepo) Save(ctx context.Context, el *expenses.ExpenseLimit)
 }
 
 func (r *expenseLimitsRepo) Delete(ctx context.Context, userId int64, index int) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "delete user limit from expense")
+	defer span.Finish()
+
 	res, err := r.pool.Exec(ctx, "delete from expense_limits where user_id=$1 and month=$2", userId, index)
 	if err == nil {
 		if res.RowsAffected() == 0 {

@@ -23,6 +23,6 @@ func (p *newExpenseMessageProcessor) ShouldProcess(msg Message, _ *userstates.Us
 	return msg.Text == "/newexpense"
 }
 
-func (p *newExpenseMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedCategory, p.tgClient.SendMessage("Введите категорию платежа", msg.UserId)
+func (p *newExpenseMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedCategory, "newexpense", p.tgClient.SendMessage("Введите категорию платежа", msg.UserId)
 }

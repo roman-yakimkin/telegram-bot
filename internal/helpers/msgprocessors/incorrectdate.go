@@ -23,6 +23,6 @@ func (p *incorrectDateMessageProcessor) ShouldProcess(_ Message, userState *user
 	return userState.GetStatus() == userstates.IncorrectDate
 }
 
-func (p *incorrectDateMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedDate, p.tgClient.SendMessage("Дата задана некорректно. Введите дату платежа в формате ГГГГ-ММ-ДД (* - текущая дата)", msg.UserId)
+func (p *incorrectDateMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedDate, "newexpense_incorrectdate", p.tgClient.SendMessage("Дата задана некорректно. Введите дату платежа в формате ГГГГ-ММ-ДД (* - текущая дата)", msg.UserId)
 }
