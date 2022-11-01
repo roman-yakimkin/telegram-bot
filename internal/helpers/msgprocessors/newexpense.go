@@ -24,5 +24,5 @@ func (p *newExpenseMessageProcessor) ShouldProcess(msg Message, _ *userstates.Us
 }
 
 func (p *newExpenseMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, string, error) {
-	return userstates.ExpectedCategory, "newexpense", p.tgClient.SendMessage("Введите категорию платежа", msg.UserId)
+	return userstates.ExpectedCategory, MessageNewExpense, p.tgClient.SendMessage("Введите категорию платежа", msg.UserId)
 }

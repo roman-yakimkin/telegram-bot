@@ -24,5 +24,5 @@ func (p *incorrectSetLimitAmountMessageProcessor) ShouldProcess(_ Message, userS
 }
 
 func (p *incorrectSetLimitAmountMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, string, error) {
-	return userstates.ExpectedSetLimitAmount, "setlimit_incorrectamount", p.tgClient.SendMessage("Сумма лимита задана неверно. Введите сумму лимита. Текущая валюта - "+userState.Currency, msg.UserId)
+	return userstates.ExpectedSetLimitAmount, MessageSetLimitIncorrectAmount, p.tgClient.SendMessage("Сумма лимита задана неверно. Введите сумму лимита. Текущая валюта - "+userState.Currency, msg.UserId)
 }

@@ -24,5 +24,5 @@ func (p *limitExceededAmountMessageProcessor) ShouldProcess(_ Message, userState
 }
 
 func (p *limitExceededAmountMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, string, error) {
-	return userstates.ExpectedAmount, "newexpense_monthlimitexceed", p.tgClient.SendMessage("При данной сумме платежа возникнет превышение месячного лимита. Введите другую сумму или дату. Текущая валюта - "+userState.Currency, msg.UserId)
+	return userstates.ExpectedAmount, MessageNewExpenseMonthLimitExceeded, p.tgClient.SendMessage("При данной сумме платежа возникнет превышение месячного лимита. Введите другую сумму или дату. Текущая валюта - "+userState.Currency, msg.UserId)
 }

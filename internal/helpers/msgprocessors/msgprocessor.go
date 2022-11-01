@@ -6,6 +6,37 @@ import (
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 )
 
+const (
+	MessageNewExpense                   = "newexpense"
+	MessageNewExpenseAmount             = "newexpense_amount"
+	MessageNewExpenseCategory           = "newexpense_category"
+	MessageNewExpenseCurrency           = "newexpense_currency"
+	MessageNewExpenseDate               = "newexpense_date"
+	MessageNewExpenseIncorrectAmount    = "newexpense_incorrectamount"
+	MessageNewExpenseIncorrectCategory  = "newexpense_incorrectcategory"
+	MessageNewExpenseIncorrectDate      = "newexpense_incorrectdate"
+	MessageNewExpenseMonthLimitExceeded = "newexpense_monthlimitexceed"
+
+	MessageDelLimit               = "dellimit"
+	MessageDelLimitMonth          = "dellimit_month"
+	MessageDelLimitIncorrectMonth = "dellimit_incorrectmonth"
+
+	MessageSetLimit                = "setlimit"
+	MessageSetLimitAmount          = "setlimit_amount"
+	MessageSetLimitMonth           = "setlimit_month"
+	MessageSetLimitIncorrectAmount = "setlimit_incorrectamount"
+	MessageSetLimitIncorrectMonth  = "setlimit_incorrectmonth"
+
+	MessageGetCurrency = "getcurrency"
+
+	MessageSetCurrency                  = "setcurrency"
+	MessageSetCurrencyIncorrectCurrency = "setcurrency_incorrectcurrency"
+
+	MessageInfo   = "info"
+	MessageLimits = "limits"
+	MessageStart  = "start"
+)
+
 type MessageSender interface {
 	SendMessage(text string, userId int64) error
 }

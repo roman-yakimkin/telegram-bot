@@ -32,5 +32,5 @@ func (p *limitsMessageProcessor) DoProcess(ctx context.Context, msg Message, _ *
 		limits = "Ошибка при выводе лимитов"
 		p.logger.Error("limit output error", zap.Error(err))
 	}
-	return userstates.ExpectedCommand, "limits", p.tgClient.SendMessage(limits, msg.UserId)
+	return userstates.ExpectedCommand, MessageLimits, p.tgClient.SendMessage(limits, msg.UserId)
 }

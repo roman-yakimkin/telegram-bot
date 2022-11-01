@@ -24,5 +24,5 @@ func (p *incorrectCategoryMessageProcessor) ShouldProcess(_ Message, userState *
 }
 
 func (p *incorrectCategoryMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, string, error) {
-	return userstates.ExpectedCategory, "newexpense_incorrectcategory", p.tgClient.SendMessage("Категория задана неверно. Введите категорию платежа", msg.UserId)
+	return userstates.ExpectedCategory, MessageNewExpenseIncorrectCategory, p.tgClient.SendMessage("Категория задана неверно. Введите категорию платежа", msg.UserId)
 }

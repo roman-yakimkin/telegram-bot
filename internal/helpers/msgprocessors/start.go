@@ -24,5 +24,5 @@ func (p *startMessageProcessor) ShouldProcess(msg Message, _ *userstates.UserSta
 }
 
 func (p *startMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, string, error) {
-	return userstates.ExpectedCommand, "start", p.tgClient.SendMessage("hello\n"+InfoText, msg.UserId)
+	return userstates.ExpectedCommand, MessageStart, p.tgClient.SendMessage("hello\n"+InfoText, msg.UserId)
 }

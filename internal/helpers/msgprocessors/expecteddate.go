@@ -24,5 +24,5 @@ func (p *expectedDateMessageProcessor) ShouldProcess(_ Message, userState *users
 }
 
 func (p *expectedDateMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, string, error) {
-	return userstates.ExpectedCommand, "newexpense_date", p.tgClient.SendMessage("Информация о платеже добавлена", msg.UserId)
+	return userstates.ExpectedCommand, MessageNewExpenseDate, p.tgClient.SendMessage("Информация о платеже добавлена", msg.UserId)
 }
