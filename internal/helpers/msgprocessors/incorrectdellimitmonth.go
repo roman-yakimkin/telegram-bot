@@ -23,6 +23,6 @@ func (p *incorrectDelLimitMonthMessageProcessor) ShouldProcess(_ Message, userSt
 	return userState.GetStatus() == userstates.IncorrectDelLimitMonth
 }
 
-func (p *incorrectDelLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedDelLimitMonth, p.tgClient.SendMessage("Месяц задан неверно. Введите месяц (1 - 12) или * для отмены", msg.UserId)
+func (p *incorrectDelLimitMonthMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedDelLimitMonth, MessageDelLimitIncorrectMonth, p.tgClient.SendMessage("Месяц задан неверно. Введите месяц (1 - 12) или * для отмены", msg.UserId)
 }

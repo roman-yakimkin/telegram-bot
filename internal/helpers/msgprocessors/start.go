@@ -23,6 +23,6 @@ func (p *startMessageProcessor) ShouldProcess(msg Message, _ *userstates.UserSta
 	return msg.Text == "/start"
 }
 
-func (p *startMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedCommand, p.tgClient.SendMessage("hello\n"+InfoText, msg.UserId)
+func (p *startMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedCommand, MessageStart, p.tgClient.SendMessage("hello\n"+InfoText, msg.UserId)
 }

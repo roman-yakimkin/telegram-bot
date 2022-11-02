@@ -2,26 +2,28 @@ package userstateprocessors
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/utils"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/store"
+	"go.uber.org/zap"
 )
 
 type DateProcessor struct {
 	processStatus int
 	store         store.Store
 	currConv      convertors.CurrencyConvertor
+	logger        *zap.Logger
 }
 
-func NewDateProcessor(store store.Store, currConv convertors.CurrencyConvertor) UserStateProcessor {
+func NewDateProcessor(store store.Store, currConv convertors.CurrencyConvertor, logger *zap.Logger) UserStateProcessor {
 	return &DateProcessor{
 		processStatus: userstates.ExpectedDate,
 		store:         store,
 		currConv:      currConv,
+		logger:        logger,
 	}
 }
 
@@ -44,13 +46,13 @@ func (p *DateProcessor) DoProcess(ctx context.Context, state *userstates.UserSta
 	}
 	amountInBaseCurrency, err := p.convertAndAddAmount(ctx, state, date)
 	if err != nil {
-		log.Println("error on currency converting:", err)
+		p.logger.Error("error on currency converting:", zap.Error(err))
 		return
 	}
 
 	ok, err := p.checkLimitExceeding(ctx, state, amountInBaseCurrency, date)
 	if err != nil {
-		log.Println("error on limit exceeding checking:", err)
+		p.logger.Error("error on limit exceeding checking:", zap.Error(err))
 		return
 	}
 	if !ok {
@@ -64,7 +66,7 @@ func (p *DateProcessor) DoProcess(ctx context.Context, state *userstates.UserSta
 func (p *DateProcessor) convertAndAddAmount(ctx context.Context, state *userstates.UserState, date time.Time) (int, error) {
 	amount, err := state.IfFloatTransformToInt(userstates.AddExpenseAmountValue)
 	if err != nil {
-		log.Println("error upon getting expense amount", err)
+		p.logger.Error("error upon getting expense amount", zap.Error(err))
 		return 0, err
 	}
 	amountInBaseCurrency, err := p.currConv.From(ctx, amount, state.Currency, utils.TimeTruncate(date))

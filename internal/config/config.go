@@ -1,9 +1,10 @@
 package config
 
 import (
+	"os"
+
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
-	"os"
 )
 
 const configFile = "data/config.yaml"
@@ -24,6 +25,7 @@ type Config struct {
 	Currencies               []CurrencyInfo `yaml:"currencies"`
 	ExpenseLimitDefault      int            `yaml:"expense_limit_default"`
 	DBConnect                string         `yaml:"db_connect"`
+	PrometheusMetricsURL     string         `yaml:"prometheus_metrics_url"`
 }
 
 type Service struct {

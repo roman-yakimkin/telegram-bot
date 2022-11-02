@@ -2,31 +2,37 @@ package pgsqlrepo
 
 import (
 	"context"
-	"log"
 	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/config"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/utils"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
+	"go.uber.org/zap"
 )
 
 type expensesRepo struct {
 	pool    *pgxpool.Pool
 	service *config.Service
+	logger  *zap.Logger
 }
 
-func NewExpenseRepo(pool *pgxpool.Pool, service *config.Service) repo.ExpensesRepo {
+func NewExpenseRepo(pool *pgxpool.Pool, service *config.Service, logger *zap.Logger) repo.ExpensesRepo {
 	return &expensesRepo{
 		pool:    pool,
 		service: service,
+		logger:  logger,
 	}
 }
 
 func (r *expensesRepo) Add(ctx context.Context, e *expenses.Expense, limitChecker repo.ExpenseLimitChecker) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "save expense to DB")
+	defer span.Finish()
+
 	tx, err := r.pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -34,7 +40,7 @@ func (r *expensesRepo) Add(ctx context.Context, e *expenses.Expense, limitChecke
 	catId, err := r.getCategoryId(ctx, tx, e.Category)
 	if err != nil {
 		if rErr := tx.Rollback(ctx); rErr != nil {
-			log.Println("rollback error", rErr)
+			r.logger.Error("rollback error", zap.Error(rErr))
 		}
 		return err
 	}
@@ -42,17 +48,17 @@ func (r *expensesRepo) Add(ctx context.Context, e *expenses.Expense, limitChecke
 		e.UserId, catId, e.Currency, e.Amount, utils.TimeTruncate(e.Date))
 	if err != nil {
 		if rErr := tx.Rollback(ctx); rErr != nil {
-			log.Println("rollback error", rErr)
+			r.logger.Error("rollback error", zap.Error(rErr))
 		}
 		return err
 	}
 	ok, err := limitChecker.MeetMonthlyLimit(ctx, e.UserId, utils.TimeTruncate(e.Date), e.Amount, limitChecker.CurrencyConvertorTo())
 	if !ok || err != nil {
 		if !ok {
-			log.Println("monthly limit exceeded")
+			r.logger.Error("monthly limit exceeded")
 		}
 		if rErr := tx.Rollback(ctx); rErr != nil {
-			log.Println("rollback error", rErr)
+			r.logger.Error("rollback error", zap.Error(rErr))
 		}
 		return err
 	}
@@ -77,6 +83,9 @@ func (r *expensesRepo) getCategoryId(ctx context.Context, tx pgx.Tx, catName str
 }
 
 func (r *expensesRepo) ExpensesByUserAndTimeInterval(ctx context.Context, userId int64, timeStart time.Time, timeEnd time.Time) (repo.ExpData, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "get expense by user and time")
+	defer span.Finish()
+
 	result := make(repo.ExpData)
 	rows, err := r.pool.Query(ctx, `
 			select c.name as category_name, e.currency_code, e.amount, e.date 

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/currencies"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 )
@@ -19,6 +20,9 @@ func NewCurrencyRepo(pool *pgxpool.Pool) repo.CurrencyRepo {
 }
 
 func (r *currencyRepo) GetOne(ctx context.Context, currName string) (*currencies.Currency, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "get currency from database")
+	defer span.Finish()
+
 	var curr currencies.Currency
 	err := r.pool.QueryRow(ctx,
 		"select code, display from currency where code=$1", currName).
@@ -30,6 +34,9 @@ func (r *currencyRepo) GetOne(ctx context.Context, currName string) (*currencies
 }
 
 func (r *currencyRepo) GetAll(ctx context.Context) ([]currencies.Currency, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "get all currencies from database")
+	defer span.Finish()
+
 	var result []currencies.Currency
 	rows, err := r.pool.Query(ctx, "select code, display from currency")
 	if err != nil {

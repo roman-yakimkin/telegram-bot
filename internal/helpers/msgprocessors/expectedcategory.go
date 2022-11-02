@@ -23,6 +23,6 @@ func (p *expectedCategoryMessageProcessor) ShouldProcess(_ Message, userState *u
 	return userState.GetStatus() == userstates.ExpectedCategory
 }
 
-func (p *expectedCategoryMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
-	return userstates.ExpectedAmount, p.tgClient.SendMessage("Введите сумму платежа. Текущая валюта - "+userState.Currency, msg.UserId)
+func (p *expectedCategoryMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedAmount, MessageNewExpenseCategory, p.tgClient.SendMessage("Введите сумму платежа. Текущая валюта - "+userState.Currency, msg.UserId)
 }

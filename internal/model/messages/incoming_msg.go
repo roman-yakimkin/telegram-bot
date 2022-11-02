@@ -6,6 +6,7 @@ import (
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/msgprocessors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/output"
+	"go.uber.org/zap"
 )
 
 type Model struct {
@@ -14,7 +15,7 @@ type Model struct {
 	msgProcessors []msgprocessors.MessageProcessor
 }
 
-func New(tgClient msgprocessors.MessageSender, output output.Output) *Model {
+func New(tgClient msgprocessors.MessageSender, output output.Output, logger *zap.Logger) *Model {
 	msgProcessors := []msgprocessors.MessageProcessor{
 		msgprocessors.NewStartMessageProcessor(tgClient, output),
 		msgprocessors.NewInfoMessageProcessor(tgClient, output),
@@ -25,7 +26,7 @@ func New(tgClient msgprocessors.MessageSender, output output.Output) *Model {
 		msgprocessors.NewExpectedCurrencyMessageProcessor(tgClient, output),
 		msgprocessors.NewIncorrectCurrencyMessageProcessor(tgClient, output),
 
-		msgprocessors.NewReportMessageProcessor(tgClient, output),
+		msgprocessors.NewReportMessageProcessor(tgClient, output, logger),
 
 		msgprocessors.NewNewExpenseMessageProcessor(tgClient, output),
 		msgprocessors.NewExpectedCategoryMessageProcessor(tgClient, output),
@@ -37,7 +38,7 @@ func New(tgClient msgprocessors.MessageSender, output output.Output) *Model {
 		msgprocessors.NewExpectedDateMessageProcessor(tgClient, output),
 		msgprocessors.NewIncorrectDateMessageProcessor(tgClient, output),
 
-		msgprocessors.NewLimitsMessageProcessor(tgClient, output),
+		msgprocessors.NewLimitsMessageProcessor(tgClient, output, logger),
 
 		msgprocessors.NewSetLimitMessageProcessor(tgClient, output),
 		msgprocessors.NewExpectedSetLimitMonthMessageProcessor(tgClient, output),
@@ -56,11 +57,11 @@ func New(tgClient msgprocessors.MessageSender, output output.Output) *Model {
 	}
 }
 
-func (s *Model) IncomingMessage(ctx context.Context, msg msgprocessors.Message, userState *userstates.UserState) (int, error) {
+func (s *Model) IncomingMessage(ctx context.Context, msg msgprocessors.Message, userState *userstates.UserState) (int, string, error) {
 	for _, proc := range s.msgProcessors {
 		if proc.ShouldProcess(msg, userState) {
 			return proc.DoProcess(ctx, msg, userState)
 		}
 	}
-	return userstates.ExpectedCommand, s.tgClient.SendMessage("не знаю эту команду", msg.UserId)
+	return userstates.ExpectedCommand, "unknown", s.tgClient.SendMessage("не знаю эту команду", msg.UserId)
 }

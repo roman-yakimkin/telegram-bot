@@ -23,6 +23,6 @@ func (p *expectedAmountMessageProcessor) ShouldProcess(_ Message, userState *use
 	return userState.GetStatus() == userstates.ExpectedAmount
 }
 
-func (p *expectedAmountMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
-	return userstates.ExpectedDate, p.tgClient.SendMessage("Введите дату платежа в формате ГГГГ-ММ-ДД (* - текущая дата)", msg.UserId)
+func (p *expectedAmountMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedDate, MessageNewExpenseAmount, p.tgClient.SendMessage("Введите дату платежа в формате ГГГГ-ММ-ДД (* - текущая дата)", msg.UserId)
 }

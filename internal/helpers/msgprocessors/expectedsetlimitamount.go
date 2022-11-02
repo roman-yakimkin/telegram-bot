@@ -23,6 +23,6 @@ func (p *expectedSetLimitAmountMessageProcessor) ShouldProcess(_ Message, userSt
 	return userState.GetStatus() == userstates.ExpectedSetLimitAmount
 }
 
-func (p *expectedSetLimitAmountMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, error) {
-	return userstates.ExpectedCommand, p.tgClient.SendMessage("Лимит установлен", msg.UserId)
+func (p *expectedSetLimitAmountMessageProcessor) DoProcess(_ context.Context, msg Message, _ *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedCommand, MessageSetLimitAmount, p.tgClient.SendMessage("Лимит установлен", msg.UserId)
 }

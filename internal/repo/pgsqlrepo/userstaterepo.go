@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/userstates"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
@@ -22,6 +23,9 @@ func NewUserStateRepo(pool *pgxpool.Pool) repo.UserStateRepo {
 }
 
 func (r *userStateRepo) GetOne(ctx context.Context, UserId int64) (*userstates.UserState, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "get user state from database")
+	defer span.Finish()
+
 	var currency string
 	var status int
 	var rawJson string
@@ -42,6 +46,9 @@ func (r *userStateRepo) GetOne(ctx context.Context, UserId int64) (*userstates.U
 }
 
 func (r *userStateRepo) Save(ctx context.Context, state *userstates.UserState) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "save user state to database")
+	defer span.Finish()
+
 	state.BeforeSave()
 	jsonBuffer, err := state.GetJSONBuffer()
 	if err != nil {
@@ -55,6 +62,9 @@ func (r *userStateRepo) Save(ctx context.Context, state *userstates.UserState) e
 }
 
 func (r *userStateRepo) Delete(ctx context.Context, userId int64) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "delete user state from database")
+	defer span.Finish()
+
 	res, err := r.pool.Exec(ctx, "delete from user_states where user_id=$1", userId)
 	if err != nil {
 		return err

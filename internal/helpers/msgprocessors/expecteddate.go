@@ -23,6 +23,6 @@ func (p *expectedDateMessageProcessor) ShouldProcess(_ Message, userState *users
 	return userState.GetStatus() == userstates.ExpectedDate
 }
 
-func (p *expectedDateMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, error) {
-	return userstates.ExpectedCommand, p.tgClient.SendMessage("Информация о платеже добавлена", msg.UserId)
+func (p *expectedDateMessageProcessor) DoProcess(_ context.Context, msg Message, userState *userstates.UserState) (int, string, error) {
+	return userstates.ExpectedCommand, MessageNewExpenseDate, p.tgClient.SendMessage("Информация о платеже добавлена", msg.UserId)
 }

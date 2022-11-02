@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/config"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/utils"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
@@ -62,6 +63,9 @@ func (ri *cbrRateImporter) isRateUnset(resp *http.Response) bool {
 }
 
 func (ri *cbrRateImporter) GetRatesByDate(ctx context.Context, date time.Time) ([]currencies.CurrencyRate, error) {
+	span, _ := opentracing.StartSpanFromContext(ctx, "import currency rate from cbi service")
+	defer span.Finish()
+
 	cfg := ri.service.GetConfig()
 	resp, err := http.Get(ri.currencyURL(date))
 	if err != nil {

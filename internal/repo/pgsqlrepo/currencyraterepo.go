@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"github.com/opentracing/opentracing-go"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/importers"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/localerr"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/currencies"
@@ -25,6 +26,9 @@ func NewCurrencyRateRepo(pool *pgxpool.Pool, currImport importers.CurrencyRateIm
 }
 
 func (r *сurrencyRateRepo) LoadByDate(ctx context.Context, date time.Time) error {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "load currency rate by date from database")
+	defer span.Finish()
+
 	importedCurr, err := r.currImport.GetRatesByDate(ctx, date)
 	if err != nil {
 		return err
@@ -65,6 +69,9 @@ func (r *сurrencyRateRepo) loadByDateRecursive(ctx context.Context, date time.T
 }
 
 func (r *сurrencyRateRepo) GetOneByDate(ctx context.Context, currName string, date time.Time) (*currencies.CurrencyRate, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "get currency rate by date from database")
+	defer span.Finish()
+
 	var currRate currencies.CurrencyRate
 	for currRate.Name == "" {
 		err := r.pool.QueryRow(ctx, "select currency_code, date, rate from currency_rates where currency_code = $1 and date = $2", currName, date).
@@ -83,6 +90,9 @@ func (r *сurrencyRateRepo) GetOneByDate(ctx context.Context, currName string, d
 }
 
 func (r *сurrencyRateRepo) HasRatesByDate(ctx context.Context, date time.Time) (bool, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "check if currency rates by date exists in database")
+	defer span.Finish()
+
 	var cntRows int
 	err := r.pool.QueryRow(ctx, "select count(currency_code) from currency_rates where date = $1", date).Scan(&cntRows)
 	if err != nil {
@@ -92,6 +102,9 @@ func (r *сurrencyRateRepo) HasRatesByDate(ctx context.Context, date time.Time) 
 }
 
 func (r *сurrencyRateRepo) GetAllByDate(ctx context.Context, date time.Time) ([]currencies.CurrencyRate, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "get all currency rates by date from database")
+	defer span.Finish()
+
 	err := r.LoadByDateIfEmpty(ctx, date)
 	if err != nil {
 		return nil, err
