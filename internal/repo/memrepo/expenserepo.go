@@ -72,3 +72,7 @@ func (r *expensesRepo) ExpensesByUserAndTimeInterval(_ context.Context, userId i
 	}
 	return result, nil
 }
+
+func (r *expensesRepo) EarliestDateSince(_ context.Context, _ time.Time) (time.Time, error) {
+	return time.Now(), nil
+}

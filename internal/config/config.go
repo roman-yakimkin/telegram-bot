@@ -26,6 +26,7 @@ type Config struct {
 	ExpenseLimitDefault      int            `yaml:"expense_limit_default"`
 	DBConnect                string         `yaml:"db_connect"`
 	PrometheusMetricsURL     string         `yaml:"prometheus_metrics_url"`
+	RedisConnect             string         `yaml:"redis_connect"`
 }
 
 type Service struct {

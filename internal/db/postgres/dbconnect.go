@@ -32,6 +32,6 @@ func (c *dBConnect) Connect(ctx context.Context) (*pgxpool.Pool, error) {
 	return c.pool, nil
 }
 
-func (c *dBConnect) Disconnect(ctx context.Context) {
+func (c *dBConnect) Disconnect(_ context.Context) {
 	c.pool.Close()
 }
