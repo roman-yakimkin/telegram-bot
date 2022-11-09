@@ -34,6 +34,7 @@ type ExpenseLimitChecker interface {
 type ExpensesRepo interface {
 	Add(ctx context.Context, e *expenses.Expense, limitChecker ExpenseLimitChecker) error
 	ExpensesByUserAndTimeInterval(ctx context.Context, userId int64, timeStart time.Time, timeEnd time.Time) (ExpData, error)
+	EarliestDateSince(ctx context.Context, date time.Time) (time.Time, error)
 }
 
 type ExpenseLimitsRepo interface {

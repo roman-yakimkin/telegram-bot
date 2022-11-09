@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  default:
+    driver: bridge
+
 services:
   filed:
     command: /file.d/file.d --config /config.yaml
@@ -95,4 +99,14 @@ services:
       - 14268:14268
       - 9411:9411
 
-
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: always
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    entrypoint: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    networks:
+      - default
+    ports:
+      - "6379:6379"

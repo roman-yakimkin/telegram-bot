@@ -8,6 +8,7 @@ import (
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/opentracing/opentracing-go"
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/cache"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/config"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/utils"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/model/expenses"
@@ -19,13 +20,15 @@ type expensesRepo struct {
 	pool    *pgxpool.Pool
 	service *config.Service
 	logger  *zap.Logger
+	cache   cache.Reports
 }
 
-func NewExpenseRepo(pool *pgxpool.Pool, service *config.Service, logger *zap.Logger) repo.ExpensesRepo {
+func NewExpenseRepo(pool *pgxpool.Pool, service *config.Service, logger *zap.Logger, cache cache.Reports) repo.ExpensesRepo {
 	return &expensesRepo{
 		pool:    pool,
 		service: service,
 		logger:  logger,
+		cache:   cache,
 	}
 }
 
@@ -66,7 +69,8 @@ func (r *expensesRepo) Add(ctx context.Context, e *expenses.Expense, limitChecke
 	if err != nil {
 		return err
 	}
-	return nil
+	err = r.cache.Invalidate(e.UserId, e.Date)
+	return err
 }
 
 func (r *expensesRepo) getCategoryId(ctx context.Context, tx pgx.Tx, catName string) (int, error) {
@@ -112,4 +116,20 @@ func (r *expensesRepo) ExpensesByUserAndTimeInterval(ctx context.Context, userId
 		result[catName][curr][date] += amount
 	}
 	return result, nil
+}
+
+func (r *expensesRepo) EarliestDateSince(ctx context.Context, date time.Time) (time.Time, error) {
+	rows, err := r.pool.Query(ctx, "select min(date) from expenses where date >= $1", utils.TimeTruncate(date))
+	if err != nil {
+		return time.Time{}, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var result time.Time
+		err := rows.Scan(&result)
+		if err == nil {
+			return result, nil
+		}
+	}
+	return time.Now(), nil
 }

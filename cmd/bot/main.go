@@ -5,6 +5,8 @@ import (
 	"flag"
 	"time"
 
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/cache/redis"
+	redis_client "gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/clients/redis"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/clients/tg"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/config"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/db/postgres"
@@ -26,12 +28,23 @@ var develMode = flag.Bool("devel", false, "development mode")
 func main() {
 	logger := loggers.InitLogger(*develMode)
 	localtracing.InitTracing(logger)
-
 	ctx := context.Background()
 	cfg, err := config.New()
 	if err != nil {
 		logger.Fatal("config init failed:", zap.Error(err))
 	}
+
+	redisConnector := redis_client.NewRedisClient(cfg, logger)
+	if err != nil {
+		logger.Fatal("redis init failed:", zap.Error(err))
+	}
+	redisClient, err := redisConnector.Connect()
+	if err != nil {
+		logger.Fatal("redis connect failed:", zap.Error(err))
+	}
+	defer redisConnector.Disconnect()
+
+	cacheReports := redis.NewCacheReports(redisClient)
 
 	db := postgres.NewDBConnect(cfg)
 	pool, err := db.Connect(ctx)
@@ -44,7 +57,7 @@ func main() {
 	currencyRepo := pgsqlrepo.NewCurrencyRepo(pool)
 	currencyRateRepo := pgsqlrepo.NewCurrencyRateRepo(pool, currencyRateImporter)
 
-	expRepo := pgsqlrepo.NewExpenseRepo(pool, cfg, logger)
+	expRepo := pgsqlrepo.NewExpenseRepo(pool, cfg, logger, cacheReports)
 	limitRepo := pgsqlrepo.NewExpenseLimitsRepo(pool, cfg)
 	userStateRepo := pgsqlrepo.NewUserStateRepo(pool)
 
@@ -62,9 +75,12 @@ func main() {
 
 	currencyOutput := output.NewCurrencyListOutput(currencyRepo)
 	currencyAmountOutput := output.NewCurrencyAmount(currencyRepo)
+
 	reportManager := output.NewReportManager(store, currencyConvertor, currencyAmountOutput, logger)
+	cachedReportManager := output.NewCachedReportManager(reportManager, store, cacheReports, logger)
+
 	limitListOutput := output.NewLimitListOutput(limitRepo, currencyAmountOutput)
-	outputSet := output.NewOutput(currencyOutput, reportManager, limitListOutput)
+	outputSet := output.NewOutput(currencyOutput, cachedReportManager, limitListOutput)
 
 	tgClient, err := tg.New(cfg, store, currencyConvertor, logger)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/defs"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/helpers/convertors"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/repo"
 	"gitlab.ozon.dev/r.yakimkin/telegram-bot/internal/store"
@@ -28,6 +29,7 @@ type ReportManager interface {
 	ReportManagerLastWeek
 	ReportManagerLastMonth
 	ReportManagerLastYear
+	StartTimeByReport(reportType defs.ReportType) time.Time
 }
 
 type reportManager struct {
@@ -46,7 +48,7 @@ func NewReportManager(store store.Store, conv convertors.CurrencyConvertorTo, cu
 	}
 }
 
-func (rm *reportManager) makeTextReport(ctx context.Context, userID int64, expData repo.ExpData) (string, error) {
+func (rm *reportManager) makeTextReport(ctx context.Context, expData repo.ExpData) (string, error) {
 	var sb strings.Builder
 	for cat, expByCurrency := range expData {
 		amountStrs := make([]string, 0, len(expByCurrency))
@@ -73,39 +75,35 @@ func (rm *reportManager) makeTextReport(ctx context.Context, userID int64, expDa
 	return sb.String(), nil
 }
 
-func (rm *reportManager) LastWeek(ctx context.Context, userId int64) (string, error) {
-	timeStart := time.Now().AddDate(0, 0, -7)
-	timeEnd := time.Now()
-	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, userId, timeStart, timeEnd)
+func (rm *reportManager) StartTimeByReport(reportType defs.ReportType) time.Time {
+	switch reportType {
+	case defs.ReportLastWeek:
+		return time.Now().AddDate(0, 0, -7)
+	case defs.ReportLastMonth:
+		return time.Now().AddDate(0, -1, 0)
+	case defs.ReportLastYear:
+		return time.Now().AddDate(-1, 0, 0)
+	}
+	return time.Now()
+}
+
+func (rm *reportManager) lastPeriod(ctx context.Context, userId int64, reportType defs.ReportType) (string, error) {
+	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, userId, rm.StartTimeByReport(reportType), time.Now())
 	if err != nil {
 		rm.logger.Error("getting report data error:", zap.Error(err))
 		return "Ошибка при получении данных", err
 	}
-	result, err := rm.makeTextReport(ctx, userId, expData)
-	if err != nil {
-		return "", err
-	}
-	return result, nil
+	return rm.makeTextReport(ctx, expData)
+}
+
+func (rm *reportManager) LastWeek(ctx context.Context, userId int64) (string, error) {
+	return rm.lastPeriod(ctx, userId, defs.ReportLastWeek)
 }
 
 func (rm *reportManager) LastMonth(ctx context.Context, userId int64) (string, error) {
-	timeStart := time.Now().AddDate(0, -1, 0)
-	timeEnd := time.Now()
-	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, userId, timeStart, timeEnd)
-	if err != nil {
-		rm.logger.Error("getting report data error:", zap.Error(err))
-		return "Ошибка при получении данных", err
-	}
-	return rm.makeTextReport(ctx, userId, expData)
+	return rm.lastPeriod(ctx, userId, defs.ReportLastMonth)
 }
 
 func (rm *reportManager) LastYear(ctx context.Context, userId int64) (string, error) {
-	timeStart := time.Now().AddDate(-1, 0, 0)
-	timeEnd := time.Now()
-	expData, err := rm.store.Expense().ExpensesByUserAndTimeInterval(ctx, userId, timeStart, timeEnd)
-	if err != nil {
-		rm.logger.Error("getting report data error:", zap.Error(err))
-		return "Ошибка при получении данных", err
-	}
-	return rm.makeTextReport(ctx, userId, expData)
+	return rm.lastPeriod(ctx, userId, defs.ReportLastYear)
 }
